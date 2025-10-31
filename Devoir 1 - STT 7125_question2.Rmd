@@ -1,0 +1,446 @@
+---
+title: "Devoir 1 - STT 7125"
+author: "Yasmine Yonli"
+date: "2025-10-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+#CTRL + ALT + I : raccourci clavier pour créer un chunk
+#include = FALSE : on inclut ni le code ni les résulats du code dans le rapport final mais le code est roulé.
+#echo = FALSE : le code est roulé mais n'est pas inclus dans le rapport final. Les résulats du code (graphiques, tableaux, etc.) sont inclus dans le rapport final.
+#eval  = FALSE : le code n'est pas évalué.
+#messages = FALSE ou warnings = FALSE : les messages potentiellement affichés lors de l'exécution du code ne sont pas inclus dans le rapport final.
+#results = 'hide' (pas bien compris); fig.show = 'hide' empêche l'affichage de graphiques.
+#error = TRUE fait en sorte de poursuivre la production du rapport final même si le code renvoie une erreur.
+
+```
+
+## Question 2
+
+```{r question2_init, include = FALSE}
+
+if (!require("GLMsData")) install.packages("GLMsData")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("scales")) install.packages("scales") 
+if (!require("rootSolve")) install.packages("rootSolve")
+if (!require("statmod")) install.packages("rootSolve")
+
+library("scales") ## Installer la librairie scales
+library("GLMsData")	## Installer la librairie GLMsData
+library("ggplot2")  ##installer la librairie ggplot2
+library("rootSolve") ##installer la librairie rootSolve
+library("statmod") ##Installer la librairie statmod. Elle permet de calculer les résidus de Pearson
+
+
+data("downs") ## rendre le jeu de données disponible
+
+```
+
+### a) Statistiques descriptives du jeu de données avec des graphiques
+
+
+```{r question_a_part1}
+
+##Statistiques descriptives
+summary(downs)
+
+##Graphiques univariés
+
+#variable Age
+x <- ggplot(downs, aes(x = Age)) +
+            geom_histogram(color = "black", bins = 10) + #aes(y = after_stat(density))
+            labs(x = "Age", y = "Frequence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Histogramme de Age")
+            
+             
+x
+
+x <- ggplot(downs, aes(y = Age)) +
+            geom_boxplot() +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Boxplot de Age")
+            
+             
+x
+
+#Variable Birth
+
+x <- ggplot(downs, aes(x = Births)) +
+            geom_histogram(color = "black", bins = 12) + #aes(y = after_stat(density))
+            labs(x = "Births", y = "Frequence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Histogramme de Births")
+            
+             
+x
+
+x <- ggplot(downs, aes(y = Births)) +
+            geom_boxplot() +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Boxplot de Births")
+            
+             
+x
+
+#Variable DS
+
+x <- ggplot(downs, aes(x = DS)) +
+            geom_histogram(color = "black", bins = 12) + #aes(y = after_stat(density))
+            labs(x = "DS", y = "Frequence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Histogramme de DS")
+            
+             
+x
+```
+
+```{r question_a_part2}
+
+#Graphiques bivariés
+
+x <- ggplot(downs, aes(x = Age, y =  (DS/Births))) +
+            geom_point()+
+            scale_y_continuous(labels = scales::percent) +
+            labs(x = "Age", y = "DS/Births (%)") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Pourcentage de naissances avec le syndrome de Down en fonction de l'âge moyen")
+            
+             
+x
+
+x <- ggplot(downs, aes(x = Age, y =  DS)) +
+            geom_point()+
+            labs(x = "Age", y = "DS") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Nombre de naissances avec le syndrome de Down en fonction de l'âge moyen")
+            
+             
+x
+
+
+which.max(downs$DS/downs$Births)
+```
+
+## b) Définir clairement la variable réponse. Quelle est la distribution exacte de cette variable
+## et quelle est la distribution la mieux adaptée à ce problème
+
+La variable réponse pour cette étude est $y_i$ = $DS_i$. Cette variable suit une binomiale de paramètres :  $pi_i$ =  (la probabilité de naître avec le syndrôme de Downs sachant l'âge moyen du groupe de mères $Age_i$), et $m_i$ = `colnames(downs)[2]`le nombre de naissances dans le groupe d'âge concerné.
+Cependant avec ce jeu de données, la plus grande probabilité de naître avec le syndrome de Downs est $pi_{28}$ = `which.max(downs$DS/downs$Births)[28]`.
+
+Ces probabilités étant faibles, la distribution la mieux adaptée à ce problème est la distribution poisson. La variable réponse est toujours $y_i$ = $DS_i$.Cette variable suit une loi de poisson  de paramètre $\mu_i$ qui vérifie $log(\frac{\mu_i}{m_i}) = \beta_0 + \beta_{Age}$. La variable $m_i$ = `colnames(downs)[2]` devient une variable explicative *offset* du modèle.
+
+
+
+## c) On veut considérer un modèle avec une composante systématique $$\etat_i$$ qui s'exprime en fonction de l'âge moyen age_i à l'aide d'un polynôme. Utiliser successivement des statistiques de test Wald et des critèrres AIC pour déterminer le degré du polynôme le plus adapté à ces données.
+
+
+```{r question_c}
+##Tests pour comprendre la fonction poly
+#modele_poly5_test1 <- glm(DS~offset(log(Births))+poly(Age,degree = 5),family = poisson, data = downs)
+#modele_poly5_test2 <- glm(DS~offset(log(Births))+Age + I(Age^2)+I(Age^3)+I(Age^4)+I(Age^5),family = poisson, data = downs)
+#summary(modele_poly5_test1)
+#summary(modele_poly5_test2)
+#On obtient la même déviance résiduelle avec test1 et test2 mais on obtient pas les mêmes paramètres et les mêmes seuils observés.
+
+#modele_poly5_test3 <- glm(DS~offset(log(Births))+poly(Age,degree = 5, raw = TRUE),family = poisson, data = downs)
+#summary(modele_poly5_test3)
+#On obtient la même déviance résiduelle avec test2 et test3, les mêmes paramètres et les mêmes seuils observés.
+
+#Que fait la fonction poly ? poly(x, degree) génère automatiquement des polynômes orthogonaux.Orthogonaliser les polynômes permet : D’ajouter des termes de degré plus élevé, Sans modifier les coefficients des termes de plus faible degré. Ce qui évite le problème de colinéarité entre x^1, x^2, x^3, etc.
+
+
+######################################################################################################################################### En attente de poser la question à Stanislas
+# 
+# ##Groupe de modèles 2
+# ##Je ne sais pas comment les interpréter
+# ##Il s'agit de 4 modèles emboîtés
+# ##On peut utiliser le test de la deviance ou de wald pour choisir le meilleur modèle
+# modele_poly5 <- glm(DS~offset(log(Births))+poly(Age,degree = 5),family = poisson, data = downs)
+# modele_poly4 <- glm(DS~offset(log(Births))+poly(Age,degree = 4),family = poisson, data = downs)
+# modele_poly3 <- glm(DS~offset(log(Births))+poly(Age,degree = 3),family = poisson, data = downs)
+# modele_poly2 <- glm(DS~offset(log(Births))+poly(Age,degree = 2),family = poisson, data = downs)
+# 
+# summary(modele_poly5)
+# summary(modele_poly4)
+# summary(modele_poly3)
+# summary(modele_poly2)
+# 
+# anova(modele_poly4,modele_poly5)
+# ##Groupe de modèles 3
+# ##Je ne sais pas comment les interpréter
+# ##Question : est-ce que ce sont des modèles emboités? à mon avis oui
+# ##Si oui, on peut utiliser le test de la deviance ou de wald pour choisir le meilleur modèle
+# modele_spline2 <- glm(DS~offset(log(Births))+ns(Age,df = 2),family = poisson, data = downs)
+# modele_spline3 <- glm(DS~offset(log(Births))+ns(Age,df = 3),family = poisson, data = downs)
+# modele_spline4 <- glm(DS~offset(log(Births))+ns(Age,df = 4),family = poisson, data = downs)
+# modele_spline5 <- glm(DS~offset(log(Births))+ns(Age,df = 5),family = poisson, data = downs)
+# summary(modele_spline2)
+# summary(modele_spline3)
+# summary(modele_spline4)
+# summary(modele_spline5)
+# 
+# 
+# ##En revanche, les modèles poly et spline ne sont pas emboîtés.
+######################################################################################################################################
+
+## Réponse à la question
+
+##Groupe de modèles 1 : 
+##Ces modèles sont plus facilement interprétables
+##Il s'agit de 5 modèles emboîtés
+##On peut utiliser le test de la deviance ou de wald pour choisir le meilleur modèle
+modele_poly_raw_6 <- glm(DS~offset(log(Births))+Age + I(Age^2)+I(Age^3)+I(Age^4)+I(Age^5)+I(Age^6),family = poisson, data = downs)
+modele_poly_raw_5 <- glm(DS~offset(log(Births))+Age + I(Age^2)+I(Age^3)+I(Age^4)+I(Age^5),family = poisson, data = downs)
+modele_poly_raw_4 <- glm(DS~offset(log(Births))+Age + I(Age^2)+I(Age^3)+I(Age^4),family = poisson, data = downs)
+modele_poly_raw_3 <- glm(DS~offset(log(Births))+Age + I(Age^2)+I(Age^3),family = poisson, data = downs)
+modele_poly_raw_2 <- glm(DS~offset(log(Births))+Age + I(Age^2),family = poisson, data = downs)
+modele_poly_raw_1 <- glm(DS~offset(log(Births))+Age, family = poisson, data = downs)
+
+##Seuil alpha pour les tests d'hypothèses : 5%
+#Test de Wald
+
+summary(modele_poly_raw_1) # Au seuil alpha la variable Age est significative selon le test de wald
+summary(modele_poly_raw_2) # Au seuil alpha, les variables Age et Age^2 sont significatives selon le test de wald
+summary(modele_poly_raw_3) # Au seuil alpha, les variables Age et Age^2 sont significatives selon le test de wald mais pas la variable Age^2
+summary(modele_poly_raw_4) # Au seuil alpha, les variables significatives deviennent Age^3 et Age^4
+summary(modele_poly_raw_5) # Au seuil alpha, les variables significatives deviennent Age^4 et Age^5
+summary(modele_poly_raw_6) # Au seuil alha,  aucune variable n'est significative
+
+modele_poly_raw_4_5 <- glm(DS~offset(log(Births))+Age + I(Age^4)+I(Age^5),family = poisson, data = downs) #Modèle avec Age + I(Age^4)+I(Age^5) 
+summary(modele_poly_raw_4_5) # Au seuil alpha, toutes les variables sont siginificatives.
+
+
+##Test du rapport de vraisemblance
+anova(modele_poly_raw_1,modele_poly_raw_2) # au seuil alpha, on rejette H0 et on choisit le modèle le plus complet.
+anova(modele_poly_raw_2,modele_poly_raw_3) # au seuil alpha, on ne rejette pas H0 et on choisit le modèle le plus simple.
+anova(modele_poly_raw_2,modele_poly_raw_4) # au seuil alpha, on rejette H0 et on choisit le modèle le plus complet.
+anova(modele_poly_raw_4,modele_poly_raw_5) # au seuil alpha, on rejette H0 et on choisit le modèle le plus complet.
+anova(modele_poly_raw_5,modele_poly_raw_6) # au seuil alpha, on ne rejette pas H0 et on choisit le modèle le plus simple.
+
+##Test du rapport de vraisemblance : zoom sur (modele_poly_raw_4_5 et modele_poly_raw_5)
+anova(modele_poly_raw_4_5,modele_poly_raw_5) # le seuil observé est 0.05 au seuil alpha 
+(Q_obs <- (deviance(modele_poly_raw_4_5)- deviance(modele_poly_raw_5)))
+(Q_theo <- qchisq(0.95, 2))
+# on  rejette H0 car  Q_obs > Q_theo) mais dans ce cas, on est à la limite
+
+##AIC
+rbind(extractAIC(modele_poly_raw_4), extractAIC(modele_poly_raw_4_5)) # Le modèle extractAIC(modele_poly_raw_4_5 est meilleur selon le AIC
+
+AIC <- rbind(extractAIC(modele_poly_raw_1),extractAIC(modele_poly_raw_2),extractAIC(modele_poly_raw_3),extractAIC(modele_poly_raw_4),
+      extractAIC(modele_poly_raw_5), extractAIC(modele_poly_raw_4_5))
+
+colnames(AIC) <- c("(p + 1)", "AIC")
+
+AIC
+##Selon le AIC, le meilleur modèle est modele_poly_raw_5 suivi du modèle  modele_poly_raw_4_5. Je suggère ke choix du modèle
+##modele_poly_raw_4_5 puisque toutes les variables y sont significatives au seuil alpha, il est le 2e meilleur modèle  selon le AIC et ## et il comporte moins de variables pour l'interprétation. Sinon on peut y aller avec le modèle modele_poly_raw_5.
+
+
+
+
+
+
+```
+
+## d) Interpréter le modèle obtenu retenu au (c). Représenter graphiquement les valeurs prédites par le modèle en fonction de l'âge. ##Interpréter la figure obtenue et la comparer aux graphiques produits au (a). Est-ce qu'il y a âge où le risque d'avoir une naissance
+##avec le syndrome de Down est minimal ? maximal ?
+
+```{r question_d}
+
+## d.1)Interpréter le modèle obtenu retenu au (c)
+modele_final <- glm(DS~offset(log(Births))+Age + I(Age^4)+I(Age^5),family = poisson, data = downs)
+summary(modele_final)
+
+format(modele_final$coefficients,scientific = F)
+##Lorsque l'age moyen augmente d'une unité, le nombre de naissances moyen avec le syndrôme de Downs augmente avec l'age et l'age^5 et diminue avec l'âge à la puissance 4. ??
+
+##d.2) Représenter graphiquement les valeurs prédites par le modèle en fonction de l'âge.
+
+predictions <- fitted(modele_final)
+
+(predictions_manuelles <- exp(modele_final$coefficients[1]+modele_final$coefficients[2]*downs$Age+
+                               modele_final$coefficients[3]*(downs$Age^4)+ modele_final$coefficients[4]*(downs$Age^5))*downs$Births) ##on obtient les mêmes valeurs qu'avec la fonction fitted
+
+x <- ggplot(data.frame(x = downs$Age, y = predictions/downs$Births), aes(x = x, y =  y)) +
+            geom_point()+
+            scale_y_continuous(labels = scales::percent) +
+            labs(x = "Age", y = "Pourcentage de DS estimé (%)") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Pourcentage de naissances moyens estimés avec le syndrome de Down en fonction de l'âge")
+            
+             
+x
+
+x <- ggplot(data.frame(x = downs$Age, y = predictions), aes(x = x, y =  y)) +
+            geom_point()+
+            labs(x = "Age", y = "DS estimé") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Nombres de naissances moyens estimés avec le syndrome de Down en fonction de l'âge")
+            
+             
+x
+
+## d.3)Est-ce qu'il y a âge où le risque d'avoir une naissance avec le syndrome de Down est minimal ? ##maximal ?
+
+## Pour avoir les âges min ou max on dérive la composante systémique et on calcule les âges x pour lesquelles la dérivée s'annule. 
+f <- function(x){modele_final$coefficients[2] +4*modele_final$coefficients[3]*(x^3) + 5*modele_final$coefficients[4]*(x^4)}
+
+age_DS_max_ou_min <- rootSolve::uniroot.all(f, c(17, 60))
+
+## L'âge est maximal si la dérivée seconde est négative et minimal si la dérivée seconde est 
+## positive
+f_2 <- function(x){4*3*modele_final$coefficients[3]*(x^2) + 5*4*modele_final$coefficients[4]*(x^3)}
+
+rbind(age_DS_max_ou_min ,f_2(age_DS_max_ou_min))
+
+```
+Étant donné la différence dans le nombre de naissances total par groupe d'âge, l'interprétation du graphique présentant le pourcentage estimé du nombre de naissances avec le syndrôme de Down nous parait plus approprié. L'analyse de ce graphique nous permet de remarquer que le pourcentage de naissances avec le syndrôme de Down est très faible et stable lorsque les mères sont agées d'environ 31 ans ou moins. Cette proportion augmente progressivement avec l'âge des mères à partir de 32 ans environ.
+On observe une tendance à peu près similaire dans le graphique produits en a). 
+Les différences notables sont que le pourcentage du nombre de naissances avec le syndrôme de Down commence à augmenter autour de 36 ans et il semble baisser à partir de 46 ans.
+
+Selon le modèle estimée, le risque  d'avoir le syndrôme de Down est minimale lorsque l'âge de la mère est autour de 25 ans et maximale lorsque l'âge de la mère est autour de 52 ans.
+
+
+## e) Procéder à la validation du modèle retenu au (c): est-ce qu'il y a une extra-variabilité? est-ce qu'il y a des observations influentes ou aberrantes ?
+
+```{r question_e}
+## Statistiques d'ajustement - si le modèle poisson est bien adapté aux données, ces deux statistiques suivent une loi chi-carré à 30-3-1 = 26 degrés de liberté
+n <- nrow(downs)
+p <- 3
+X2 <- sum((predictions-downs$DS)^2/(predictions))
+D <- deviance(modele_final)
+
+1-pchisq(c(X2,D), df = n-p-1) ## les valeurs des seuils observés pour ces deux statistiques sont inférieures à 5%: le modèle retenu ne semble pas approprié pour les données.
+
+##Vérification de l'extra-variabilité
+
+# phi.pearson
+(phi.pearson <- X2/(n-p-1)) ## L'estimateur de Pearson de phi est largement différent de 1 (1.58). Il y'a donc possiblement présence d'extra-variabilité.
+
+# Graphiques
+
+(res_pearson <- (downs$DS-predictions)/sqrt(predictions))
+#(res_pearson2 <- statmod::qresid(modele_final)) ##
+(res_pearson3 <- resid(modele_final, type = "pearson"))
+## sum(res_pearson2-res_pearson) # je n'obtiens pas les mêmes valeurs avec les deux méthodes ??
+## sum(res_pearson3-res_pearson) # j'obtiens pas les mêmes valeurs avec les deux méthodes 
+(res_deviance <- resid(modele_final))
+
+
+x <- ggplot(data.frame(x = 1:30, y = res_pearson3), aes(x = x, y =  y)) +
+            geom_point() +
+            ylim(c(-4,4)) +
+            geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+            geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+            labs(x = "Numéro d'observation", y = "Résidus Pearson") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Résidus Pearson")
+            
+             
+x
+
+x <- ggplot(data.frame(x = 1:30, y = res_deviance), aes(x = x, y =  y)) +
+            geom_point()+
+            ylim(c(-4,4)) +
+            geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+            geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+            labs(x = "Numéro d'observation", y = "Résidus déviance") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Résidus déviance")
+            
+             
+x
+
+x <- ggplot(data.frame(x = downs$DS, y = predictions), aes(x = x, y =  y)) +
+            geom_point() +
+            xlim(c(10,40)) +
+            ylim(c(10,40)) +
+            geom_abline(intercept = 0, slope = 1) +
+            labs(x = "DS - valeur réelle", y = "DS - valeur prédite") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Valeurs de DS réelles vs prédites")
+            
+             
+x
+
+
+```
+
+Les valeurs des seuils observés pour les deux statistiques d'ajustement sont inférieures à 5%: le modèle retenu ne semble pas approprié pour les données. Le graphique des valeurs prédites de DS en fonction des vaelurs réelles indique également un mauvais ajustement.
+Par ailleurs, l'estimateur de Pearson de phi est largement différent de 1 (1.58). Il y'a donc possiblement présence d'extra-variabilité.
+
+```{r question_e_part2}
+##Rappel : Les valeurs aberrantes sont identifiées comme des observations ayant des résidus exceptionnellement grands.
+##Les valeurs aberrantes sont des observations qui ne sont pas cohérentes avec le reste des données, et les observations influentes sont des valeurs aberrantes qui modifient considérablement le modèle ajusté lorsqu'elles sont retirées de l'ensemble de données.
+
+## Calcul des leviers et des residus 
+h <- hatvalues(modele_final)
+sum(h)
+
+# Résidus de deviance standardisés est studentisés
+res_D <- cbind("r'D"= rstandard(modele_final), "r''D"= rstudent(modele_final))
+mean(res_D[,1]) #Résidus de deviance standardisés 
+var(res_D[,1])
+mean(res_D[,2]) #Résidus de deviance studentisés
+var(res_D[,2]) 
+#la moyenne de ces résidus est proche de 0 mais la variance est supérieure à 1
+
+
+## Detection des observations aberrantes
+apply(abs(res_D), 2, function(x){which(abs(x)>=3)}) # on applique la fonction max sur les colonnes # observation 11 
+
+
+## Detection des observations influentes
+
+indices_h <- which(h>(3*(p+1)/n)) #observation 30
+
+d1 <- cooks.distance(modele_final)
+max(d1) ### a comparer avec 1 et avec qf(0.5,p+1,n-(p+1))
+qf(0.5,p+1,n-(p+1))
+indice_cook <- which(d1>qf(0.5,p+1,n-(p+1))) #observation 30
+
+d2 <- dffits(modele_final) 
+max(abs(d2)) ### a comparer avec 3p/n
+3*p/n
+indices_dffits <- which(as.vector(abs(d1))>3*p/n) #observations 11,30
+
+d3 <- dfbetas(modele_final)
+max(abs(d3)) ### a comparer avec 3/racine.carre(n)
+3/sqrt(n)
+d3.matrice <- abs(d3)>3/sqrt(n)
+indices_dfbetas <- which(as.vector(rowSums(d3.matrice))>0) #observations 11,30
+
+d4 <- covratio(modele_final)
+max(abs(1-d4)) ### a comparer avec 3p/n
+3*p/n
+indices_covratio <- which(as.vector(abs(1-d4))>3*p/n)
+
+intersect(indices_dfbetas,indices_covratio)
+intersect(intersect(indices_dffits,indices_dfbetas),indices_covratio) #11,30
+
+###Autre fonction permettant d'avoir un résumé des mesures calculées plus haut :
+
+ im <- influence.measures(modele_final)
+ head(im$infmat)
+ colSums(im$is.inf)
+ im$is.inf
+ 
+ ##Avec cette fonction, l'observation 30 est déclarée influente selon les critères h, DFBETA, DEFFITS et rapport de covariance. Les observations 1 et 11 sont déclarées influentes selon le rapport de covariance uniquement. Je ne sais pas quoi choisir. Est-ce que les critères pour déclarer des observations influentes selon ces mesures sont les mêmes pour les GLM que pour les lm ??
+```
+L'observation 30 semble être aberrante. En effet, cette obsersation a des résidus de deviance standardisés et studentisés supérieur à 3 en valeur absolu. (3.204375 et 3.242966). Cette observation a un levier important et est déclarée influente selon les critères :  Distance de Cook, DFFITS, DFBETAS et le rapport de covariance. L'observation 11 est également déclarée influente selon les critères :  DFFITS, DFBETAS et le rapport de covariance.
+Les obsersavations 1, 2 , 3 et 29 ont été déclarées influentes selon le rapport de covariance mais pas selon les autres critères.`
