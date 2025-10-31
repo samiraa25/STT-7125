@@ -1,0 +1,208 @@
+# STT-7125
+Devoir 1
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(car)
+```
+
+## Question 1
+
+### 1a
+
+Voici les graphiques présentant les données sur le jeu de données sur le salaire des employés en fonction du dernier diplôme obtenu, du nombre d’années d’expérience et du nombre de personnes supervisées par l’employé.
+Nous avons d’abord les graphiques du salaire en fonction d’une des variables explicatives.
+
+```{r, echo=FALSE}
+Salary <- read.table("data/salaires.txt")
+names(Salary) <- c("salaire", "diplome", "experience", "nombre")
+Salary <- Salary[Salary$salaire!="salaire",]
+Salary$salaire <- as.numeric(Salary$salaire)
+Salary$diplome <- as.numeric(Salary$diplome)
+Salary$experience <- as.numeric(Salary$experience)
+Salary$nombre <- as.numeric(Salary$nombre)
+```
+
+```{r, echo=FALSE}
+ggplot(data=Salary) +
+  geom_point(mapping=aes(x = experience, y = salaire)) +
+  scale_x_continuous(n.breaks = 6) +
+  scale_y_continuous(n.breaks = 5) +
+  labs(title = "Salaire en fonction du nombre d'années d'expérience", x = "Nombre d'années d'expérience", y = "Salaire") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```
+
+Nous remarquons ici que le salaire des employés a tendance à augmenter avec le nombre d’années d’expérience, ce qui est intuitif car plus les employés ayant travaillé plus longtemps ont plus de promotions en raison de leur loyauté et niveau d’expertise. 
+
+```{r, echo=FALSE}
+ggplot(data=Salary) +
+  geom_point(mapping=aes(x = nombre, y = salaire)) +
+  scale_x_continuous(n.breaks = 6) +
+  scale_y_continuous(n.breaks = 5) +
+  labs(title = "Salaire en fonction du nombre de personnes supervisées", x = "Nombre de personnes supervisées", y = "Salaire") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```
+
+Le salaire augmente aussi avec le nombre de personnes supervisées par l’employé, mais puisqu’il y a un nombre important d’employés dans la base qui ne surveille personne, il y a une plus grande densité autour de la valeur 0 et donc une précision plus faible pour cette variable. Il y a 42 employés qui ne supervisent personne, donc le graphique est un peu moins significatif. 
+
+Regardons un graphique du salaire en fonction du nombre de personnes supervisées en omettant les non-superviseurs.
+
+```{r, echo=FALSE}
+ggplot(data=Salary[Salary$nombre != 0, ]) +
+  geom_point(mapping=aes(x = nombre, y = salaire)) +
+  scale_x_continuous(n.breaks = 6) +
+  scale_y_continuous(n.breaks = 5) +
+  labs(title = "Salaire en fonction du nombre de personnes supervisées par les superviseurs", x = "Nombre de personnes supervisées", y = "Salaire") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```
+
+Dans celui-ci nous voyons plus clairement l’influence du nombre d’employés supervisés sur le salaire. 
+```{r, echo=FALSE}
+ggplot(data = Salary) + 
+  geom_boxplot(mapping = aes(x = factor(diplome, labels = c("Baccalauréat", "Maîtrise", "Doctorat")), y = salaire)) +
+  labs(
+    title = "Salaire en fonction du dernier diplôme obtenu",
+    x = "Diplome",
+    y = "Salaire"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```
+
+Le diagramme en boîte ci-dessus indique une augmentation du salaire avec un dernier diplôme obtenu de plus haut niveau. On observe le salaire avec comme dernier diplôme un baccalauréat, une maîtrise et un doctorat. Toutes les mesures de position montrées par le diagramme (quartiles, médiane, minimum, maximum et valeurs potentiellement aberrantes) montrent une augmentation en fonction du diplôme. 
+
+Regardons maintenant le salaire en fonction de deux variables explicatives.
+
+```{r, echo=FALSE}
+ggplot(data = Salary) + 
+  geom_point(mapping = aes(
+    x = experience, 
+    y = salaire, 
+    colour = nombre
+  )) +
+  labs(
+    title = "Salaire en fonction de l'expérience et du nombre d'employés supervisés",
+    x = "Nombre d'années d'expérience",
+    y = "Salaire",
+    colour = "Nombre d'employés \nsupervisés"
+  ) + scale_colour_viridis_c() +
+  facet_wrap(facets =~ factor(diplome, labels = c("Baccalauréat", "Maîtrise", "Doctorat"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```
+
+Ces graphiques montrent à la fois l’influence du nombre d’employés supervisés et le nombre d’années d’expérience sur le salaire, et les deux semblent l’influencer linéairement.
+
+```{r, echo=FALSE}
+ggplot(data = Salary, aes(x = experience, y = salaire, color = factor(diplome, labels = c("Baccalauréat", "Maîtrise", "Doctorat")))) +
+  geom_point() + theme_bw() + labs(title="Le salaire en fonction du nombre d'années d'expérience et du diplôme", x="Nombre d'années d'expérience", y="Salaire", color = "Diplôme") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```
+
+Le salaire augmente de façon assez claire en fonction du nombre d’années d’expérience et les données semblent être significativement délimitées par le dernier diplôme obtenu.
+
+```{r, echo=FALSE}
+ggplot(data = Salary, aes(x = nombre, y = salaire, color = factor(diplome, labels = c("Baccalauréat", "Maîtrise", "Doctorat")))) +
+  geom_point() + theme_bw() + labs(title="Le salaire en fonction du nombre d'employés supervisés et du diplôme", x="Nombre d'employés supervisés", y="Salaire", color = "Diplôme") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```
+
+Enfin, on remarque dans ce graphique une augmentation du salaire en fonction du nombre d’employés supervisés et une délimitation du dernier diplôme. Cependant, il est encore moins clair en raison du grand nombre de personnes ne supervisant aucun employé. 
+
+Les graphiques indiquent alors une augmentation du salaire en fonction des trois variables explicatives et nous nous attendons donc à ce qu’elles exercent une influence significative sur la variable réponse. La variable sur le nombre d’employés supervisés est moins claire puisqu’il y a beaucoup de non-superviseurs et il est concevable d’avoir un grand salaire sans superviser, mais en omettant ces personnes, nous avons une augmentation également.
+
+### 1b
+
+Étudions la multicolinéarité de ces données avec le facteur d’inflation de la variance (VIF) et puis les coefficients de corrélations entre les variables explicatives. 
+
+Nous avons d’abord établi le modèle linéaire avec toutes les variables explicatives, puis nous avons calculé le VIF pour chacune des variables explicatives. Nous obtenons un VIF d’environ 1,1 pour le diplôme, 1,7 pour l’expérience et de 1,8 pour le nombre d’employés supervisés. Ces valeurs sont tous plus petits que 2, ce qui est assez bas et donc nous ne suspectons pas de multicolinéarité. 
+
+Calculons également les coefficients de corrélation entre les variables explicatives. Nous obtenons environ 0,64 pour le nombre de personnes supervisées et l’expérience, 0,30 pour le nombre d’employés supervisés et le diplôme et 0,23 pour le diplôme et l’expérience. Le coefficient entre le nombre de personnes supervisées et l’expérience est plus élevée que les autres donc il pourrait y avoir une multicolinéarité.
+
+### 1c
+
+À partir du modèle complet (toutes les variables explicatives et leurs interactions) et du modèle vide, nous avons utilisé les procédures forward, backward et stepwise. Les trois modèles retiennent le même modèle, celui avec toutes les variables explicatives ainsi que l’interaction entre le nombre d’employés supervisés et le dernier diplôme obtenu. Ce modèle a un AIC d’environ 292,31.
+
+```{r, echo=FALSE}
+best_modele <- lm(salaire ~ factor(diplome) + experience + nombre + nombre:factor(diplome), data = Salary)
+summary(best_modele)
+```
+
+Ci-dessus se trouvent les coefficients de ce modèle. L’intercept de 30,337 indique l’ordonnée à l’origine, donc le salaire de l’employé s’il a comme dernier diplôme un baccalauréat, aucune expérience et ne supervise personne. Les coefficients associés au diplôme indiquent que pour une même expérience et nombre de personnes supervisées, une personne avec une maîtrise reçoit 9,323 de plus qu’une personne avec un baccalauréat, et un doctorat apporte 26,641 de plus qu’un baccalauréat seul. Les coefficients pour l’expérience et le nombre de supervisés signifient que pour chaque année de plus d’expérience, en moyenne un employé à un salaire augmenté de 1,235, et pour chaque personne supervisée de plus, l’employé reçoit 3,431 de plus. Enfin, pour les coefficients d’interaction entre le diplôme et le nombre d’employés supervisés, nous apprenons que le nombre de supervisés apporte 0,504 de moins pour une personne avec maîtrise que qu'avec un baccalauréat, et 1,990 de moins pour une personne avec doctorat qu’avec un baccalauréat.
+
+### 1d
+
+Nous avons créé la variable supervision avec 0 si l’employé ne supervise personne et 1 sinon, puis avons répété les mêmes procédures. Les trois méthodes retiennent le même modèle, mais cette fois-ci celui avec les trois variables explicatives et l’interaction entre le nombre d’employés supervisés et l’expérience (au lieu du nombre de supervisés et le diplôme). Voici les coefficients de ce modèle.
+
+```{r, echo=FALSE}
+Salary$supervision <- ifelse(test = Salary$nombre > 0, yes = 1, no = 0)
+best_modele_supervision <- lm(salaire ~ experience+factor(supervision)+factor(diplome)+factor(supervision):experience, data=Salary)
+summary(best_modele_supervision)
+```
+
+Interprétons ces coefficients. L’intercept de 28,5104 indique l’ordonnée à l’origine, donc le salaire de l’employé s’il a comme dernier diplôme un baccalauréat, aucune expérience et ne supervise personne. Les coefficients associés au diplôme indiquent que pour une même expérience et nombre de personnes supervisées, une personne avec une maîtrise reçoit 13,8165 de plus qu’une personne avec un baccalauréat, et un doctorat apporte 27,8193 de plus qu’un baccalauréat seul. Le coefficient pour l’expérience signifie que pour chaque année de plus d’expérience, en moyenne un employé à un salaire augmenté de 1,2878. Le coefficient pour la supervision dit qu’un superviseur reçoit en moyenne 0,7207 de moins qu’un non-superviseur. Enfin, pour le coefficient d’interaction entre l'expérience et le nombre d’employés supervisés, nous apprenons que le nombre d’années d’expérience apporte 1,2420 de plus pour les superviseurs que pour les non-superviseurs. 
+
+L’AIC de ce modèle est de 347,35, ce qui est plus grand que 292,31, le AIC du modèle précédent. Le premier est donc meilleur et il vaut mieux considérer la variable nombre.
+
+### 1e
+
+Représentons visuellement les résidus standardisés et les leviers de plusieurs manières. Nous les analyserons dans la prochaine section. 
+
+Nous avons d’abord calculé les résidus standardisés du meilleur modèle, puis avons créé les graphiques de ces résidus en fonction de chacune des variables explicatives. 
+
+Pour les variables experience et nombre, nous avons simplement placé des points, mais pour la variable diplome, puisqu’elle n’est pas continue, nous avons choisi de faire un diagramme en boîte pour mieux visualiser les résidus.
+
+```{r, echo=FALSE}
+residus_stand <- rstandard(best_modele)
+residus_studen <- rstudent(best_modele)
+scatter.smooth(residus_stand ~ Salary$experience, xlab = "Expérience", ylab = "Résidus standardisés", main = "Graphique 1: Résidus standardisés en fonction de l'expérience")
+boxplot(residus_stand ~ factor(Salary$diplome),
+        xlab = "Diplôme",
+        ylab = "Résidus standardisés",
+        main = "Graphique 2 : Résidus standardisés en fonction du diplôme")
+
+scatter.smooth(residus_stand ~ Salary$nombre, xlab = "Nombre d'employés supervisés", ylab = "Résidus standardisés", main = "Graphique 3: Résidus standardisés en fonction du nombre d'employés supervisés")
+```
+
+Nous avons également tracé les résidus en fonction de la variable réponse.
+
+```{r, echo=FALSE}
+scatter.smooth(residus_stand ~ Salary$salaire, xlab = "Salaire", ylab = "Résidus standardisés", main = "Graphique 4: Résidus standardisés en fonction du salaire")
+```
+
+Ensuite, il se trouve les résidus standardisés en fonction du numéro d’observation.
+
+```{r, echo=FALSE}
+scatter.smooth(residus_stand ~ 2:66, xlab = "Numéro d'observation", ylab = "Résidus standardisés", main = "Graphique 5: Résidus standardisés en fonction du numéro d'observation")
+```
+
+## Question 2
+
+## Question 3
