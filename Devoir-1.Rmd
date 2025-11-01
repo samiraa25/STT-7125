@@ -1,0 +1,216 @@
+---
+title: "STT-7125"
+output: html_document
+date: "2025-10-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Chargement des librairies
+library("GLMsData")	
+library(ggplot2)
+library(patchwork)
+library("statmod")
+
+#Réupérer le jeu de données
+data("earinf")#### Rendre le jeu de donnees disponible
+
+n <- dim(earinf)[1]
+
+```
+
+# Question 3
+
+Le jeu de données sur l'infection des oreilles comporte 287 observations et 4 variables explicatives: <br>
+  -Swim: nageur fréquent ou pas (Freq ou Occas)<br>
+  -Loc: nage à la mer ou pas (Beach ou nonBeach)<br>
+  -Age: âge des nageurs (15-19, 20-24 ou 25-29)<br>
+  -Sex: sexe des nageurs (Female ou Male)
+
+## Statistiques descriptives
+
+```{r variables_plot, include=FALSE}
+x1 <-ggplot(earinf, aes(x = Swim, fill = factor(Infec))) +
+  geom_bar(position = "fill") +
+  labs(title = "Proportion d'infection selon Swim",
+       y = "Proportion", fill = "Infection") +
+  theme_minimal()
+
+x2 <-ggplot(earinf, aes(x = Loc, fill = factor(Infec))) +
+  geom_bar(position = "fill") +
+  labs(title = "Proportion d'infection selon Loc",
+       y = "Proportion", fill = "Infection") +
+  theme_minimal()
+
+x3 <-ggplot(earinf, aes(x = Sex, fill = factor(Infec))) +
+  geom_bar(position = "fill") +
+  labs(title = "Proportion d'infection selon le sexe",
+       y = "Proportion", fill = "Infection") +
+  theme_minimal()
+
+#Pour les variables numériques
+x4 <-  ggplot(earinf, aes(x = Age, y = Infec)) +
+  geom_jitter(height = 0.06, width = 0.2, alpha = 0.4) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Relation entre âge et infection",
+       y = "Infection (0/1)") +
+  theme_minimal()
+```
+
+En explorant les données, on remarque que toutes les variables explicatives à l'étude sont catégorielles.<br>
+Les graphiques de ces variables en fonction de la variable réponse Infec montre principalement:<br>
+
+Selon la variable Swim, il y a autant de nageurs ayant eu une infection de l'oreille que ceux n'ayant pas eu d'infection pour les nageurs ayant une fréquence occasionnelle. En revanche, chez ceux qui nagent de facon fréquente, il y a un peu moins de nageurs qui ont eu une infection.<br><br>
+Concernant la localisation (Loc), il y a un peu plus de nageurs qui n'ont pas eu d'infection en nageant ailleurs que dans la mer, tandis que ceux qui nagent dans la mer ont une proportion plus élevée de ne pas avoir d'infection par rapport à ceux ayant eu une infetion.<br><br>
+On remarque qu'il n'y a pas vraiment de différence entre le fait d'avoir ou non une infection selon le sexe, mais une légère distinction apparait pour les femmes pour lesquelles il y a un peu moins de risque d'avoir une infection.<br><br>
+Enfin, il y a également autant de nageurs dans les 3 catégories d'âge qui ont eu ou non une infection.
+```{r stat1}
+summary(earinf); (x1|x2)/(x3|x4)
+```
+
+## Définition du modèle
+
+La variable réponse $Y_i = Infec_i$ est une variable binaire, prenant 0 ou 1 comme valeurs. Les données alors sont sous la forme $[(Y_i,X_i), i=1,...,287]$ avec $Y_i \in \{0,1\}$ et $(X_i=(X_{i1},...,X_{i4})^T$ l'ensemble des 4 variables explicatives pour l'observation $i$.<br>
+Le modèle logistique s’écrit comme :
+
+\[
+\log\left(\frac{\pi_i}{1 - \pi_i}\right) = \beta_0 + \beta_1 X_{i1} + \cdots + \beta_p X_{ip}
+\]
+
+où $\pi_i = P(Y_i = 1)$ désigne la probabilité de succès pour l’observation $i$.
+
+\[
+\pi_i = \frac{e^{\beta_0 + \beta_1 X_{i1} + \cdots + \beta_p X_{ip}}}{1 + e^{\beta_0 + \beta_1 X_{i1} + \cdots + \beta_p X_{ip}}}
+\]
+
+```{r, include=FALSE}
+modele_initial <- glm(Infec ~ Swim + Loc + Sex + Age, data = earinf, family = binomial(link = "logit"))
+```
+
+```{r}
+summary(modele_initial)
+```
+
+
+## Sélection des variables
+
+### Cas où l'âge est catégoriel
+```{r selection, include=FALSE}
+modele_max_1 <- glm(Infec ~ Swim + Loc + Sex + Age,
+                        data = earinf, family = binomial)
+modele_min_1 <- glm(Infec ~ 1, 
+                     data = earinf, family = binomial)
+# Forward
+forward_1 <- step(modele_min_1, scope = list(lower = modele_min_1, upper = modele_max_1), 
+              direction = "forward", trace = TRUE)
+
+# Backward
+backward_1 <- step(modele_max_1, direction = "backward", trace = TRUE)
+
+# Stepwise
+stepwise_1 <- step(modele_max_1, direction = "both", trace = TRUE)
+
+```
+
+
+Les méthodes de sélection de variables, forward, backward et stepwise sélectionnent les variables Swim et Loc comme étant les plus significatives dans le modèle. Voici la méthode forward à titre d'exemple ainsi que les AIC finaux des 3 méthodes.
+```{r}
+forward_1 <- step(modele_min_1, scope = list(lower = modele_min_1, upper = modele_max_1), 
+              direction = "forward", trace = TRUE)
+AIC(forward_1,backward_1,stepwise_1)
+```
+
+
+### Cas où l'âge est continu
+
+L'âge initialement catégoriel, a été converti en une variable numérique en prenant l'âge moyen de chaque catégorie.<br>
+En incluant la variable d'âge continue, le modèle complet obtient un AIC plus faible (395.1) que celui ave l'âge catégoriel (396.2). Le BIC également confirme le fait que le modèle avec l'âge considéré comme étant continu est le plus adapté aux données.<br>
+Incluons des termes d'interaction, cubiques, quadratiques et voyons si ces ajouts améliorent le modèle. 
+```{r, include=FALSE}
+earinf$Age_continu <-ifelse(earinf$Age == "15-19", mean(c(15,19)),
+                            ifelse(earinf$Age == "20-24", mean(c(20,24)), mean(c(25,29))))
+summary(earinf)
+
+#Définition du modèle avec l'age continu
+modele_age_continu <- glm(Infec ~ Swim + Loc + Sex + Age_continu, data = earinf, family = binomial(link = "logit"))
+
+rbind(summary(modele_age_continu)$coef,
+        summary(modele_initial)$coef)
+
+AIC_1 <- extractAIC(modele_initial)[2]
+BIC_1 <- extractAIC(modele_initial, k=log(n))[2]
+
+AIC_2 <- extractAIC(modele_age_continu)[2]
+BIC_2 <- extractAIC(modele_age_continu, k=log(n))[2]
+
+```
+
+```{r}
+data.frame(AIC=c(AIC_1,AIC_2), BIC=c(BIC_1,BIC_2) )
+```
+
+
+Pour déterminer si l'on doit inclure des termes carrés, cubiques ou encore des interactions, considérons le modèle contenant tous ces termes. Les méthodes backward et stepwise sélectionnent les mêmes variables avec un AIC de 391.1 tandis que la méthode forward séletionne le même modèle sans intéraction avec un AIC de 391.2.<br>
+Le meilleur modèle est celui avec le plus petit AIC, donc celui contenant les variables Swim, Loc, Sexe et l'interaction entre ces 2 dernières variables
+```{r, include=FALSE}
+modele_max_2 <- glm(Infec ~ (Swim + Loc + Sex + Age_continu)^2 + I(Age_continu^2)+ I(Age_continu^3),
+                        data = earinf, family = binomial)
+modele_min_2 <- glm(Infec ~ 1, 
+                     data = earinf, family = binomial)
+
+# Stepwise
+stepwise_2 <- step(modele_max_2, direction = "both", trace = TRUE)
+
+# Forward
+forward_2 <- step(modele_min_2, scope = list(lower = modele_min_2, upper = modele_max_2), 
+              direction = "forward", trace = TRUE)
+
+# Backward
+backward_2 <- step(modele_max_2, direction = "backward", trace = TRUE)
+
+modele <- glm(Infec ~ Swim + Loc + Sex + Loc:Sex,
+                        data = earinf, family = binomial)
+
+```
+
+### Fonction de lien
+
+```{r, include=FALSE}
+p <- 4
+df <- n-(p+1)
+
+residus.deviance <- resid(modele)
+residus.Pearson <- qresid(modele)
+
+Deviance <- deviance(modele) ## doit donner la meme chose que sum(residus.deviance^2)
+Pearson <- sum(residus.Pearson^2)
+
+(pvaleur.Deviance <- 1 - pchisq(Deviance,df=df)) 
+(pvaleur.Pearson <- 1 - pchisq(Pearson,df=df))
+
+#Graphiques
+
+```
+
+A première vue, les résultats des différents modèles sont très similaires.
+```{r, include=FALSE}
+modele.logit  <- glm(Infec ~ Swim + Loc + Sex + Loc:Sex, data=earinf, family=binomial(link="logit"))
+modele.probit <- glm(Infec ~ Swim + Loc + Sex + Loc:Sex, data=earinf, family=binomial(link="probit"))
+modele.cloglog<- glm(Infec ~ Swim + Loc + Sex + Loc:Sex, data=earinf, family=binomial(link="cloglog"))
+
+resultats2 <- round(rbind(summary(modele.logit)$coef,summary(modele.probit)$coef,summary(modele.cloglog)$coef),10)
+resultats2 <- resultats2[c(1,6,11,2,7,12,3,8,13),]
+row.names(resultats2) <- c("beta0 (logit)", "beta0 (probit)","beta0 (cloglog)","beta1 (logit)", "beta1 (probit)","beta1 (cloglog)","beta2 (logit)", "beta2 (probit)","beta2 (cloglog)")
+
+```
+
+```{r}
+resultats2
+```
+
+### Interprétation du modèle
+
+
+
+### Validation du modèle
