@@ -1,7 +1,7 @@
 ---
-title: "STT-7125"
+title: "Quest3"
 output: html_document
-date: "2025-10-31"
+date: "2025-11-01"
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +12,7 @@ library("GLMsData")
 library(ggplot2)
 library(patchwork)
 library("statmod")
+library("clinfun")	#### Installer la librairie clinfun
 
 #Réupérer le jeu de données
 data("earinf")#### Rendre le jeu de donnees disponible
@@ -19,6 +20,7 @@ data("earinf")#### Rendre le jeu de donnees disponible
 n <- dim(earinf)[1]
 
 ```
+
 
 # Question 3
 
@@ -31,31 +33,27 @@ Le jeu de données sur l'infection des oreilles comporte 287 observations et 4 v
 ## Statistiques descriptives
 
 ```{r variables_plot, include=FALSE}
-x1 <-ggplot(earinf, aes(x = Swim, fill = factor(Infec))) +
+g1 <-ggplot(earinf, aes(x = Swim, fill = factor(Infec))) +
   geom_bar(position = "fill") +
   labs(title = "Proportion d'infection selon Swim",
        y = "Proportion", fill = "Infection") +
   theme_minimal()
 
-x2 <-ggplot(earinf, aes(x = Loc, fill = factor(Infec))) +
+g2 <-ggplot(earinf, aes(x = Loc, fill = factor(Infec))) +
   geom_bar(position = "fill") +
   labs(title = "Proportion d'infection selon Loc",
        y = "Proportion", fill = "Infection") +
   theme_minimal()
 
-x3 <-ggplot(earinf, aes(x = Sex, fill = factor(Infec))) +
+g3 <-ggplot(earinf, aes(x = Sex, fill = factor(Infec))) +
   geom_bar(position = "fill") +
   labs(title = "Proportion d'infection selon le sexe",
        y = "Proportion", fill = "Infection") +
   theme_minimal()
 
 #Pour les variables numériques
-x4 <-  ggplot(earinf, aes(x = Age, y = Infec)) +
-  geom_jitter(height = 0.06, width = 0.2, alpha = 0.4) +
-  geom_smooth(method = "loess", se = FALSE) +
-  labs(title = "Relation entre âge et infection",
-       y = "Infection (0/1)") +
-  theme_minimal()
+boxplot(Age ~ Infec, data = earinf, main="Âge selon infection", ylab="Âge")
+
 ```
 
 En explorant les données, on remarque que toutes les variables explicatives à l'étude sont catégorielles.<br>
@@ -66,8 +64,11 @@ Concernant la localisation (Loc), il y a un peu plus de nageurs qui n'ont pas eu
 On remarque qu'il n'y a pas vraiment de différence entre le fait d'avoir ou non une infection selon le sexe, mais une légère distinction apparait pour les femmes pour lesquelles il y a un peu moins de risque d'avoir une infection.<br><br>
 Enfin, il y a également autant de nageurs dans les 3 catégories d'âge qui ont eu ou non une infection.
 ```{r stat1}
-summary(earinf); (x1|x2)/(x3|x4)
+summary(earinf);
+#par(mfrow=c(1,2))
+g1;g2;g3; boxplot(Age ~ Infec, data = earinf, main="Âge selon infection", ylab="Âge")
 ```
+
 
 ## Définition du modèle
 
@@ -99,6 +100,7 @@ summary(modele_initial)
 ```{r selection, include=FALSE}
 modele_max_1 <- glm(Infec ~ Swim + Loc + Sex + Age,
                         data = earinf, family = binomial)
+
 modele_min_1 <- glm(Infec ~ 1, 
                      data = earinf, family = binomial)
 # Forward
@@ -114,7 +116,7 @@ stepwise_1 <- step(modele_max_1, direction = "both", trace = TRUE)
 ```
 
 
-Les méthodes de sélection de variables, forward, backward et stepwise sélectionnent les variables Swim et Loc comme étant les plus significatives dans le modèle. Voici la méthode forward à titre d'exemple ainsi que les AIC finaux des 3 méthodes.
+Les méthodes de sélection de variables, forward, backward et stepwise sélectionnent les variables Swim et Loc comme étant les plus significatives dans le modèle. Voici la méthode forward à titre d'exemple ainsi que les AIC finaux des 3 méthodes. On a le modèle suivant: $Y_i = \beta_0 + \beta_1 Swim_{i} + \beta_2 Loc_{i}$
 ```{r}
 forward_1 <- step(modele_min_1, scope = list(lower = modele_min_1, upper = modele_max_1), 
               direction = "forward", trace = TRUE)
@@ -127,6 +129,7 @@ AIC(forward_1,backward_1,stepwise_1)
 L'âge initialement catégoriel, a été converti en une variable numérique en prenant l'âge moyen de chaque catégorie.<br>
 En incluant la variable d'âge continue, le modèle complet obtient un AIC plus faible (395.1) que celui ave l'âge catégoriel (396.2). Le BIC également confirme le fait que le modèle avec l'âge considéré comme étant continu est le plus adapté aux données.<br>
 Incluons des termes d'interaction, cubiques, quadratiques et voyons si ces ajouts améliorent le modèle. 
+
 ```{r, include=FALSE}
 earinf$Age_continu <-ifelse(earinf$Age == "15-19", mean(c(15,19)),
                             ifelse(earinf$Age == "20-24", mean(c(20,24)), mean(c(25,29))))
@@ -135,6 +138,7 @@ summary(earinf)
 #Définition du modèle avec l'age continu
 modele_age_continu <- glm(Infec ~ Swim + Loc + Sex + Age_continu, data = earinf, family = binomial(link = "logit"))
 
+#Comparaison des deux modèles: modèle 1: age catégoriel et modèle 2: age continu
 rbind(summary(modele_age_continu)$coef,
         summary(modele_initial)$coef)
 
@@ -150,12 +154,14 @@ BIC_2 <- extractAIC(modele_age_continu, k=log(n))[2]
 data.frame(AIC=c(AIC_1,AIC_2), BIC=c(BIC_1,BIC_2) )
 ```
 
-
 Pour déterminer si l'on doit inclure des termes carrés, cubiques ou encore des interactions, considérons le modèle contenant tous ces termes. Les méthodes backward et stepwise sélectionnent les mêmes variables avec un AIC de 391.1 tandis que la méthode forward séletionne le même modèle sans intéraction avec un AIC de 391.2.<br>
-Le meilleur modèle est celui avec le plus petit AIC, donc celui contenant les variables Swim, Loc, Sexe et l'interaction entre ces 2 dernières variables
+Le meilleur modèle est celui avec le plus petit AIC, donc celui contenant les variables Swim, Loc, Sexe et l'interaction entre ces 2 dernières variables. 
+
+On obtient le modèle suivant: $Y_i = \beta_0 + \beta_1 Swim_{i} + \beta_2 Loc_{i} + \beta_3 Sex_{i}+ \beta_4 Loc*Sex_{i}$.
+
 ```{r, include=FALSE}
-modele_max_2 <- glm(Infec ~ (Swim + Loc + Sex + Age_continu)^2 + I(Age_continu^2)+ I(Age_continu^3),
-                        data = earinf, family = binomial)
+modele_max_2 <- glm(Infec ~ (Swim + Loc + Sex+ Age_continu)^2 + I(Age_continu^2)+ I(Age_continu^3) ,
+                        data = earinf, family = binomial(link = "logit"))
 modele_min_2 <- glm(Infec ~ 1, 
                      data = earinf, family = binomial)
 
@@ -163,45 +169,43 @@ modele_min_2 <- glm(Infec ~ 1,
 stepwise_2 <- step(modele_max_2, direction = "both", trace = TRUE)
 
 # Forward
-forward_2 <- step(modele_min_2, scope = list(lower = modele_min_2, upper = modele_max_2), 
-              direction = "forward", trace = TRUE)
+forward_2 <- step(modele_min_2, scope = list(lower = modele_min_2, upper = modele_max_2),
+                  direction = "forward", trace = TRUE)
 
 # Backward
 backward_2 <- step(modele_max_2, direction = "backward", trace = TRUE)
 
 modele <- glm(Infec ~ Swim + Loc + Sex + Loc:Sex,
-                        data = earinf, family = binomial)
-
+                        data = earinf, family = binomial(link = "logit"))
+summary(modele)
 ```
 
-### Fonction de lien
+## Fonction de lien
 
-```{r, include=FALSE}
-p <- 4
-df <- n-(p+1)
+Testons les 3 fonctions de lien: <br>
 
-residus.deviance <- resid(modele)
-residus.Pearson <- qresid(modele)
+-Logit qui est définie par $g(u) = logit(u) = log(\frac{u}{1-u})$. <br>
+-Probit qui est définie par $g(u) = (u)$ .<br>
+-C-log-log qui est définie par $g(u) = log(-log(1-u))$.
 
-Deviance <- deviance(modele) ## doit donner la meme chose que sum(residus.deviance^2)
-Pearson <- sum(residus.Pearson^2)
+Les résultats des différents modèles sont très similaires. Par conséquent, la fonction de lien n'influence pas les résultats, mais pour une meilleure interprétation, on privilégiera la fonction logit.
 
-(pvaleur.Deviance <- 1 - pchisq(Deviance,df=df)) 
-(pvaleur.Pearson <- 1 - pchisq(Pearson,df=df))
-
-#Graphiques
-
-```
-
-A première vue, les résultats des différents modèles sont très similaires.
 ```{r, include=FALSE}
 modele.logit  <- glm(Infec ~ Swim + Loc + Sex + Loc:Sex, data=earinf, family=binomial(link="logit"))
 modele.probit <- glm(Infec ~ Swim + Loc + Sex + Loc:Sex, data=earinf, family=binomial(link="probit"))
 modele.cloglog<- glm(Infec ~ Swim + Loc + Sex + Loc:Sex, data=earinf, family=binomial(link="cloglog"))
 
-resultats2 <- round(rbind(summary(modele.logit)$coef,summary(modele.probit)$coef,summary(modele.cloglog)$coef),10)
-resultats2 <- resultats2[c(1,6,11,2,7,12,3,8,13),]
-row.names(resultats2) <- c("beta0 (logit)", "beta0 (probit)","beta0 (cloglog)","beta1 (logit)", "beta1 (probit)","beta1 (cloglog)","beta2 (logit)", "beta2 (probit)","beta2 (cloglog)")
+resultats2 <- round(rbind(summary(modele.logit)$coef,
+                          summary(modele.probit)$coef,
+                          summary(modele.cloglog)$coef),10)
+
+resultats2 <- resultats2[c(1,6,11,2,7,12,3,8,13,4,9,14,5,10,15),]
+
+row.names(resultats2) <- c("beta0 (logit)", "beta0 (probit)","beta0 (cloglog)",
+                           "beta1 (logit)", "beta1 (probit)","beta1 (cloglog)",
+                           "beta2 (logit)", "beta2 (probit)","beta2 (cloglog)",
+                           "beta3 (logit)", "beta3 (probit)","beta3 (cloglog)",
+                           "beta4 (logit)", "beta4 (probit)","beta4 (cloglog)")
 
 ```
 
@@ -209,8 +213,72 @@ row.names(resultats2) <- c("beta0 (logit)", "beta0 (probit)","beta0 (cloglog)","
 resultats2
 ```
 
-### Interprétation du modèle
+## Interprétation du modèle
+
+Le modèle est $Y_i = -0.41053576 + 0.41509704Swim_{i} + 0.03306821 Loc_{i} + -0.46438016 Sex_{i}+ 1.05834579 Loc*Sex_{i}$.<br><br>
+On peut donc interpréter celui-ci avec $e^{\beta_j}$:
+Les nageurs occasionnels ont $e^{0.41509704} = 1.51$, donc 51% plus de chances d'infection que les nageurs fréquents,
+nager dans dans quelque part d'autre que dans la mer aumente le risque de 103%, les hommes ont 159% moins de chance d'avoir une infection et deplus, ils ont 2.88 fois plus de chances de'infection s'ils nagent hors plage d'attraper une infection.
 
 
+## Valeurs influentes, aberrantes et extravariabilité
 
-### Validation du modèle
+Aucune observation n'a été déclarée influente ou aberrante. Le facteur de dispersion $\hat{\phi} = \frac{\text{Déviance résiduelle}}{n - (p+1)} = 1.351358 <2 $ et prcohe de 1, alors on peut conclure qu'il n'y a pas d'extra variabilité.
+```{r, include=FALSE}
+n <- dim(earinf)[1]
+p <- dim(earinf)[2]-3
+df<-n-(p+1)
+h <- hatvalues(modele.logit)
+
+h <- hatvalues(modele.logit)
+(indices.h <- which(as.vector(h)>3*(p+1)/n))
+
+d1 <- cooks.distance(modele.logit)
+max(d1) ### a comparer avec 1 et avec qf(0.5,p+1,n-(p+1))
+qf(0.5,p+1,n-(p+1))
+
+d2 <- dffits(modele.logit) 
+max(abs(d2)) ### a comparer avec 3p/n
+3*p/n
+indices.d2 <- which(as.vector(abs(d1))>3*p/n)
+
+d3 <- dfbetas(modele.logit)
+max(abs(d3)) ### a comparer avec 3/racine.carre(n)
+3/sqrt(n)
+d3.matrice <- abs(d3)>3/sqrt(n)
+indices.d3 <- which(as.vector(rowSums(d3.matrice))>0)
+
+d4 <- covratio(modele.logit)
+max(abs(1-d4)) ### a comparer avec 3p/n
+3*p/n
+indices.d4 <- which(as.vector(abs(1-d4))>3*p/n)
+
+#Pour vérifier l'extra variabilité
+deviance_residuelle <- summary(modele.logit)$deviance
+rapport <- deviance_residuelle / df
+
+```
+
+```{r}
+intersect(indices.d3,indices.d4)
+intersect(intersect(indices.d2,indices.d3),indices.d4)
+print(rapport)
+```
+
+## Validation du modèle
+Effectuons des comparaisons pour des modèles emboités et non emboités afin de valider que le modèle sélectionné est un bon modèle
+```{r, include=FALSE}
+modele_complet<-glm(Infec ~ Swim + Loc + Sex + Loc:Sex, data=earinf, family=binomial(link="logit"))
+
+#Prédiction du modèle
+courbe.roc <- roc.curve(marker=as.vector(fitted(modele.logit)),status=earinf$Infec,method=c("empirical"))
+
+```
+
+En déterminant l'aire sous la courbe ROC, on obtient une aire de 63.3% avec une erreur-type de 0.032. <br>
+Le modèle ne prédit pas bien l'infection de l'oreille à travers ce jeu de données
+```{r}
+print(courbe.roc);plot(courbe.roc)
+```
+
+
