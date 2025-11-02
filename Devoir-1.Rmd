@@ -1,7 +1,7 @@
 ---
 title: "Quest3"
 output: html_document
-date: "2025-11-01"
+date: "2025-11-02"
 ---
 
 ```{r setup, include=FALSE}
@@ -33,27 +33,59 @@ Le jeu de données sur l'infection des oreilles comporte 287 observations et 4 v
 ## Statistiques descriptives
 
 ```{r variables_plot, include=FALSE}
-g1 <-ggplot(earinf, aes(x = Swim, fill = factor(Infec))) +
-  geom_bar(position = "fill") +
-  labs(title = "Proportion d'infection selon Swim",
-       y = "Proportion", fill = "Infection") +
+
+#Stat simples
+g1 <- ggplot(earinf, aes(x = Swim, y = Infec)) +
+  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
+  labs(x = "Swim", y = "Proportion d'infection") +
+  theme_minimal(base_size = 13)
+
+g2 <- ggplot(earinf, aes(x = Loc, y = Infec)) +
+  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
+  labs(x = "Loc", y = "Proportion d'infection") +
+  theme_minimal(base_size = 13) 
+g3 <- ggplot(earinf, aes(x = Sex, y = Infec)) +
+  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
+  labs(x = "Sexe", y = "Proportion d'infection") +
+  theme_minimal(base_size = 13) 
+g4 <- ggplot(earinf, aes(x = Age, y = Infec)) +
+  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
+  labs(x = "Age", y = "Proportion d'infection") +
+  theme_minimal(base_size = 13)
+
+#Stat bivariées
+g5 <-ggplot(earinf, aes(x = Swim, fill = factor(Infec))) + geom_bar(position = "fill") +
+  labs(y = "Proportion", fill = "Infection") +
   theme_minimal()
 
-g2 <-ggplot(earinf, aes(x = Loc, fill = factor(Infec))) +
+g6 <-ggplot(earinf, aes(x = Loc, fill = factor(Infec))) +
   geom_bar(position = "fill") +
-  labs(title = "Proportion d'infection selon Loc",
-       y = "Proportion", fill = "Infection") +
+  labs(y = "Proportion", fill = "Infection") +
   theme_minimal()
 
-g3 <-ggplot(earinf, aes(x = Sex, fill = factor(Infec))) +
+g7 <-ggplot(earinf, aes(x = Sex, fill = factor(Infec))) +
   geom_bar(position = "fill") +
-  labs(title = "Proportion d'infection selon le sexe",
-       y = "Proportion", fill = "Infection") +
+  labs(y = "Proportion", fill = "Infection") +
+  theme_minimal()
+
+g8 <-ggplot(earinf, aes(x = Age, fill = factor(Infec))) +
+  geom_bar(position = "fill") +
+  labs(y = "Proportion", fill = "Infection") +
   theme_minimal()
 
 #Pour les variables numériques
 boxplot(Age ~ Infec, data = earinf, main="Âge selon infection", ylab="Âge")
 
+graph1<-(g1 + g2 + g3 +g4) +
+  plot_annotation(
+    title = "Proportion d'infection selon les variables explicatives - simple",
+    theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  )
+graph2<-(g5 + g6 + g7 + g8) +
+  plot_annotation(
+    title = "Proportion d'infection selon les variables explicatives - bivariée",
+    theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  )
 ```
 
 En explorant les données, on remarque que toutes les variables explicatives à l'étude sont catégorielles.<br>
@@ -64,9 +96,8 @@ Concernant la localisation (Loc), il y a un peu plus de nageurs qui n'ont pas eu
 On remarque qu'il n'y a pas vraiment de différence entre le fait d'avoir ou non une infection selon le sexe, mais une légère distinction apparait pour les femmes pour lesquelles il y a un peu moins de risque d'avoir une infection.<br><br>
 Enfin, il y a également autant de nageurs dans les 3 catégories d'âge qui ont eu ou non une infection.
 ```{r stat1}
-summary(earinf);
-#par(mfrow=c(1,2))
-g1;g2;g3; boxplot(Age ~ Infec, data = earinf, main="Âge selon infection", ylab="Âge")
+summary(earinf)
+graph1 ; graph2
 ```
 
 
@@ -116,7 +147,8 @@ stepwise_1 <- step(modele_max_1, direction = "both", trace = TRUE)
 ```
 
 
-Les méthodes de sélection de variables, forward, backward et stepwise sélectionnent les variables Swim et Loc comme étant les plus significatives dans le modèle. Voici la méthode forward à titre d'exemple ainsi que les AIC finaux des 3 méthodes. On a le modèle suivant: $Y_i = \beta_0 + \beta_1 Swim_{i} + \beta_2 Loc_{i}$
+Les méthodes de sélection de variables, forward, backward et stepwise sélectionnent les variables Swim et Loc comme étant les plus significatives dans le modèle. Voici la méthode forward à titre d'exemple ainsi que les AIC finaux des 3 méthodes. <br>
+On a le modèle suivant: $Y_i = \beta_0 + \beta_1 Swim_{Occas} + \beta_2 Loc_{NonBeach}$.
 ```{r}
 forward_1 <- step(modele_min_1, scope = list(lower = modele_min_1, upper = modele_max_1), 
               direction = "forward", trace = TRUE)
@@ -155,9 +187,9 @@ data.frame(AIC=c(AIC_1,AIC_2), BIC=c(BIC_1,BIC_2) )
 ```
 
 Pour déterminer si l'on doit inclure des termes carrés, cubiques ou encore des interactions, considérons le modèle contenant tous ces termes. Les méthodes backward et stepwise sélectionnent les mêmes variables avec un AIC de 391.1 tandis que la méthode forward séletionne le même modèle sans intéraction avec un AIC de 391.2.<br>
-Le meilleur modèle est celui avec le plus petit AIC, donc celui contenant les variables Swim, Loc, Sexe et l'interaction entre ces 2 dernières variables. 
+Le meilleur modèle est celui avec le plus petit AIC, donc celui contenant les variables Swim, Loc, Sexe et l'interaction entre ces 2 dernières variables. <br>
 
-On obtient le modèle suivant: $Y_i = \beta_0 + \beta_1 Swim_{i} + \beta_2 Loc_{i} + \beta_3 Sex_{i}+ \beta_4 Loc*Sex_{i}$.
+On obtient le modèle final suivant: $Y_i = \beta_0 + \beta_1 Swim_{Occas} + \beta_2 Loc_{NonBeach} + \beta_3 Sex_{Male}+ \beta_4 Loc_{NonBeach}*Sex_{Male}$.
 
 ```{r, include=FALSE}
 modele_max_2 <- glm(Infec ~ (Swim + Loc + Sex+ Age_continu)^2 + I(Age_continu^2)+ I(Age_continu^3) ,
@@ -215,10 +247,16 @@ resultats2
 
 ## Interprétation du modèle
 
-Le modèle est $Y_i = -0.41053576 + 0.41509704Swim_{i} + 0.03306821 Loc_{i} + -0.46438016 Sex_{i}+ 1.05834579 Loc*Sex_{i}$.<br><br>
+Le modèle est $Y_i = -0.41053576 + 0.41509704*Swim_{i} + 0.03306821*Loc_{i} + -0.46438016*Sex_{i}+ 1.05834579* Loc*Sex_{i}$ avec les catégories de référence Swim = Freq, Loc = Beach et Sex = Female.<br><br>
+
 On peut donc interpréter celui-ci avec $e^{\beta_j}$:
-Les nageurs occasionnels ont $e^{0.41509704} = 1.51$, donc 51% plus de chances d'infection que les nageurs fréquents,
-nager dans dans quelque part d'autre que dans la mer aumente le risque de 103%, les hommes ont 159% moins de chance d'avoir une infection et deplus, ils ont 2.88 fois plus de chances de'infection s'ils nagent hors plage d'attraper une infection.
+Les nageurs occasionnels ont $e^{0.41509704} = 1.514$, donc le fait de nager occasionnellement plutôt que fréquemment augmente le risque d'infection de 51.4%.<br>
+
+Le fait de nager ailleurs qu'à la mer augmente le risque d'infection de 3.36% en comparaison au fait de nager à la mer. <br>
+
+Ensuite, les hommes ont une cote d'infection 0.6286 fois plus que celle des femmes.<br>
+
+Enfin, chez les hommes, le fait de nager ailleurs qu'à la mer a un risque $e^{1.05835+0.03307} = 2.9785$ fois plus élevé.
 
 
 ## Valeurs influentes, aberrantes et extravariabilité
@@ -255,30 +293,57 @@ indices.d4 <- which(as.vector(abs(1-d4))>3*p/n)
 
 #Pour vérifier l'extra variabilité
 deviance_residuelle <- summary(modele.logit)$deviance
-rapport <- deviance_residuelle / df
+rapport_phi <- deviance_residuelle / df
 
 ```
 
 ```{r}
 intersect(indices.d3,indices.d4)
 intersect(intersect(indices.d2,indices.d3),indices.d4)
-print(rapport)
+print(rapport_phi)
 ```
 
 ## Validation du modèle
-Effectuons des comparaisons pour des modèles emboités et non emboités afin de valider que le modèle sélectionné est un bon modèle
+
 ```{r, include=FALSE}
-modele_complet<-glm(Infec ~ Swim + Loc + Sex + Loc:Sex, data=earinf, family=binomial(link="logit"))
+#Adéquation du modèle
+pvalue.adequation <- 1-pchisq(deviance_residuelle, df=df)
 
 #Prédiction du modèle
 courbe.roc <- roc.curve(marker=as.vector(fitted(modele.logit)),status=earinf$Infec,method=c("empirical"))
+auc_courbe <- 0.6330347
+
 
 ```
 
-En déterminant l'aire sous la courbe ROC, on obtient une aire de 63.3% avec une erreur-type de 0.032. <br>
-Le modèle ne prédit pas bien l'infection de l'oreille à travers ce jeu de données
+La déviance est une des statistiques disponible pour tester l'adéquation globale d'un modèle. $D = \sum_{i=1}^n r_{D,i}^2$ et suit approximativement une loi du $\chi^2_{n-(p+1)}$ sous l’hypothèse d’un bon ajustement.<br>
+La p-value obtenue étant très significative, l'hypothèse nulle que le modèle est adéquat aux données est rejetée. <br><br>
+De plus, en déterminant l'aire sous la courbe ROC, on obtient une aire de 63.3% avec une erreur-type de 0.032. <br>
+Le modèle ne prédit pas bien l'infection de l'oreille à travers ce jeu de données, il est d'ailleurs mauvais.
+
+```{r, include=FALSE}
+validation_results <- data.frame(
+  Critere = c("Adéquation globale", "Surdispersion ", "Pouvoir prédictif (AUC)"),
+  Resultat_Numerique = c(
+    formatC(pvalue.adequation, format = "e", digits = 2),
+    round(rapport_phi, 3),
+    round(auc_courbe, 3)
+  ),
+  Conclusion = c(
+    "Très significative (Rejet de $H_0$: Modèle non adéquat)",
+    "1.351 (Non significative : $\\hat{\\phi} < 2$)",
+    "0.633 (Mauvaise performance)"
+  )
+)
+
+```
+
 ```{r}
+pvalue.adequation
 print(courbe.roc);plot(courbe.roc)
+knitr::kable(validation_results,
+             caption = "Résumé des critères de validation du modèle logistique final",
+             col.names = c("Critère de validation", "Résultat numérique", "Conclusion"),
+             align = 'lrr')
 ```
-
 
