@@ -1,5 +1,11 @@
-# STT-7125
-Devoir 1
+---
+title: "STT-7125"
+subtitle: "Devoir 1"
+author: "Caroline Schomacker (536 995 219) -
+         Samira Amani (111 248 078) -
+         Yasmine Yonli ( )"
+date: "2025-11-02"
+---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -303,23 +309,30 @@ Le jeu de données sur l'infection des oreilles comporte 287 observations et 4 v
 ```{r variables_plot, include=FALSE}
 
 #Stat simples
-g1 <- ggplot(earinf, aes(x = Swim, y = Infec)) +
-  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
-  labs(x = "Swim", y = "Proportion d'infection") +
-  theme_minimal(base_size = 13)
+g1 <- ggplot(earinf, aes(x = Swim)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Swim", x = "Fréquence de nage", y = "Effectif") +
+  theme_minimal(base_size = 12)
 
-g2 <- ggplot(earinf, aes(x = Loc, y = Infec)) +
-  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
-  labs(x = "Loc", y = "Proportion d'infection") +
-  theme_minimal(base_size = 13) 
-g3 <- ggplot(earinf, aes(x = Sex, y = Infec)) +
-  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
-  labs(x = "Sexe", y = "Proportion d'infection") +
-  theme_minimal(base_size = 13) 
-g4 <- ggplot(earinf, aes(x = Age, y = Infec)) +
-  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
-  labs(x = "Age", y = "Proportion d'infection") +
-  theme_minimal(base_size = 13)
+g2 <- ggplot(earinf, aes(x = Loc)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Loc", x = "Lieu de nage", y = "Effectif") +
+  theme_minimal(base_size = 12) 
+
+g3 <- ggplot(earinf, aes(x = Sex)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Sex", x = "Sexe", y = "Effectif") +
+  theme_minimal(base_size = 12) 
+
+g4 <- ggplot(earinf, aes(x = Age)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Age", x = "Catégorie d'âge", y = "Effectif") +
+  theme_minimal(base_size = 12)
+
+g9 <- ggplot(earinf, aes(x = Infec)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Infec", x = "Infection", y = "Effectif") +
+  theme_minimal(base_size = 12)
 
 #Stat bivariées
 g5 <-ggplot(earinf, aes(x = Swim, fill = factor(Infec))) + geom_bar(position = "fill") +
@@ -357,12 +370,15 @@ graph2<-(g5 + g6 + g7 + g8) +
 ```
 
 En explorant les données, on remarque que toutes les variables explicatives à l'étude sont catégorielles.<br>
-Les graphiques de ces variables en fonction de la variable réponse Infec montre principalement:<br>
+Les graphiques de ces variables en fonction de la variable réponse Infec montre principalement que l'échantillon est globalement bien réparti entre les principales modalités des variables explicatives. Cependant On remarque des légers déséquilibres pour le sexe et l'âge.<br>
 
-Selon la variable Swim, il y a autant de nageurs ayant eu une infection de l'oreille que ceux n'ayant pas eu d'infection pour les nageurs ayant une fréquence occasionnelle. En revanche, chez ceux qui nagent de facon fréquente, il y a un peu moins de nageurs qui ont eu une infection.<br><br>
-Concernant la localisation (Loc), il y a un peu plus de nageurs qui n'ont pas eu d'infection en nageant ailleurs que dans la mer, tandis que ceux qui nagent dans la mer ont une proportion plus élevée de ne pas avoir d'infection par rapport à ceux ayant eu une infetion.<br><br>
-On remarque qu'il n'y a pas vraiment de différence entre le fait d'avoir ou non une infection selon le sexe, mais une légère distinction apparait pour les femmes pour lesquelles il y a un peu moins de risque d'avoir une infection.<br><br>
-Enfin, il y a également autant de nageurs dans les 3 catégories d'âge qui ont eu ou non une infection.
+Selon la variable Swim, les nageurs sont répartis de façon équilibrée entre les deux catégories Fréquents et Occasionnels. La proportion d'infection est légèrement plus élevée chez les nageurs à fréquence Occasionnelle (Occas) que chez les nageurs Fréquents.<br>
+
+Concernant la localisation (Loc), il y a un peu plus de personnes nageant à la place comparé à ailleurs. la proportion d'infection est visiblement plus faible lorsque la nage a lieu à la Mer (Beach) par rapport à la nage ailleurs qu'à la mer.<br>
+
+On observe davantage d’hommes que de femmes. La proportion d'infection est très similaire entre les sexes, avec une légère tendance à être plus faible chez les Femmes par rapport aux Hommes.<br>
+
+Enfin, il y a beaucoup plus de nageurs entre 15 et 19 ans. Les jeunes de 25 à 29 ans sont les moins nombreux des 3 catégories. De plus, il n'y a pas de différence notable dans la proportion d'infection à travers les trois catégories d'âge, on peut se douter que l'âge pourrait ne pas être significatif.
 ```{r stat1}
 summary(earinf)
 graph1 ; graph2
