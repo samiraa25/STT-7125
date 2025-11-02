@@ -452,7 +452,7 @@ AIC(forward_1,backward_1,stepwise_1)
 
 L'âge initialement catégoriel, a été converti en une variable numérique en prenant l'âge moyen de chaque catégorie.<br>
 En incluant la variable d'âge continue, le modèle complet obtient un AIC plus faible (395.1) que celui ave l'âge catégoriel (396.2). Le BIC également confirme le fait que le modèle avec l'âge considéré comme étant continu est le plus adapté aux données.<br>
-Incluons des termes d'interaction, cubiques, quadratiques et voyons si ces ajouts améliorent le modèle. 
+Même si l'âge n'était pas significatif dans le modèle initial, incluons des termes d'interaction, cubiques, quadratiques et voyons si ces ajouts améliorent le modèle.  
 
 ```{r, include=FALSE}
 earinf$Age_continu <-ifelse(earinf$Age == "15-19", mean(c(15,19)),
