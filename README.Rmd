@@ -572,7 +572,7 @@ Enfin, chez les hommes, le fait de nager ailleurs qu'à la mer a un risque $e^{1
 
 ## Valeurs influentes, aberrantes et extravariabilité
 
-Aucune observation n'a été déclarée influente ou aberrante. Le facteur de dispersion $\hat{\phi} = \frac{\text{Déviance résiduelle}}{n - (p+1)} = 1.351358 <2 $ et prcohe de 1, alors on peut conclure qu'il n'y a pas d'extra variabilité.
+Aucune observation n'a été déclarée influente ou aberrante. Le facteur de dispersion $$\hat{\phi} = \frac{\text{Déviance résiduelle}}{n - (p+1)} = 1.351358 <2 $$ et prcohe de 1, alors on peut conclure qu'il n'y a pas d'extra variabilité.
 ```{r, include=FALSE}
 n <- dim(earinf)[1]
 p <- dim(earinf)[2]-3
@@ -618,6 +618,7 @@ print(rapport_phi)
 
 ```{r, include=FALSE}
 #Adéquation du modèle
+residus.deviance <- resid(modele.logit)
 pvalue.adequation <- 1-pchisq(deviance_residuelle, df=df)
 
 #Prédiction du modèle
@@ -646,12 +647,13 @@ validation_results <- data.frame(
     "0.633 (Mauvaise performance)"
   )
 )
-
+pvalue.adequation
+print(courbe.roc)
 ```
 
 ```{r}
-pvalue.adequation
-print(courbe.roc);plot(courbe.roc)
+plot(residus.deviance,type="p",xlab="Numero d’observation",ylab="Residus deviance")
+plot(courbe.roc)
 knitr::kable(validation_results,
              caption = "Résumé des critères de validation du modèle logistique final",
              col.names = c("Critère de validation", "Résultat numérique", "Conclusion"),
