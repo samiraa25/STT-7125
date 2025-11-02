@@ -43,18 +43,14 @@ library("MASS") ##Installer la librairie MASS pour l'ajustement du modèle avec 
 
 ### a) Statistiques descriptives du jeu de données avec des graphiques
 
-Le jeu de données à l'étude pour la question 2 contient 30 observations de 03 variables numériques qui sont : Age, Birth et DS.
+Le jeu de données à l'étude pour la question 2 contient 30 observations de 03 variables numériques qui sont : *Age*, *Birth* et *DS*.
 
--   La variable *Age* prend des valeurs entre 17 et 47.10.
-    L'histogramme de cette variable indique qu'en général, les valeurs sont prises uniformément dans cet intervalle.
-    Il n'y a pas de groupes d'âge sous-représentés ou surreprésentés dans 
-le jeu de données.
+- La variable *Age* prend des valeurs entre 17 et 47.10. L'âge moyen est de 32 ans. L'histogramme de cette variable indique qu'en général, les valeurs sont prises uniformément dans cet intervalle. Il n'y a pas de groupes d'âge sous-représentés ou surreprésentés dans le jeu de données.
 
--   La variable *Births* prend des valeurs entre 249 et 24 807.
-    L'histogramme de cette variable indique également qu'en général, les valeurs sont prises uniformément dans cet intervalle.
+- La variable *Births* prend des valeurs entre 249 et 24 807. Elle représente le nombre de naissances par groupe d'âge des mères. Le nombre de naissance moyen est 11 829.
+    
 
--   La variable *DS* prend des valeurs entre 7 et 33.
-    L'histogramme de cette variable montre une asymétrie à gauche.
+- La variable *DS* prend des valeurs entre 7 et 33. Il s'agit du nombre de naissances avec le syndrôme de Down.Cette valeur est relativement faible par rapport au nombre de naissances.
 
 ```{r question_a_part1, echo=FALSE}
 
@@ -119,6 +115,28 @@ x <- ggplot(downs, aes(x = DS)) +
 x
 ```
 
+Le graphique du nombre de naissances en fonction de l'âge moyen des groupes montre que le nombre de naissances augmente avec l'âge jusqu'à environ 24 ans puis diminue progressivement à mesure que l'âge augmente. Ce qui est un résultat attendu.
+
+```{r question_a_part2, echo=FALSE}
+#Graphiques bivariés
+x <- ggplot(downs, aes(x = Age, y =  Births)) +
+            geom_point()+
+            labs(x = "Age", y = "Births") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Le nombre de naissances en fonction de l'âge moyen")
+            
+             
+x
+```
+
+La matrice de corrélation entre les variables indique une forte corrélation linéaire négative entre les variables *Age* et *Births*. Ce qui confirme l'interprétation faite un peu plus haut dans l'analyse : plus les mères sont âgées, moins il y'a de naissances.
+Cependant, il y a une faible corrélation entre la variable *DS* et les variables *Births* et *Age*. Cela pourrait s'expliquer par le fait qu'on ne tient pas compte de la taille des groupes. La section suivante nous aide à mieux comprendre la relation entre ces variables.
+
+```{r question_a_part4, echo=FALSE}
+cor(downs)
+```
+
 Le nuage de points de la variable *DS* en fonction de la variable *Age* ne nous permet pas de tirer des conclusions pertinentes sur la relation entre ces deux variables à cause de la différence du nombre de naissances (*Births*) par groupe d'âge.
 Nous avons donc tracé un nuage de points du pourcentage de naissances avec le syndrôme de Down (*DS/Births (%)*) en fonction de la variable *Age*.
 Ce graphique permet d'observer que le pourcentage de naissances avec le syndrôme
@@ -127,9 +145,10 @@ moins de 35 ans.
 Ce pourcentage augmente progresssivement à partir de 35 ans.
 Il semble diminuer à partir de 45 ans selon ce qu'on observe sur le graphique.
 
-```{r question_a_part2, echo=FALSE}
+```{r question_a_part3, echo=FALSE}
 
 #Graphiques bivariés
+
 x <- ggplot(downs, aes(x = Age, y =  DS)) +
             geom_point()+
             labs(x = "Age", y = "DS") +
@@ -157,6 +176,9 @@ x
 #which.max(downs$DS/downs$Births)
 ```
 
+
+
+
 ### b) Définir clairement la variable réponse. Quelle est la distribution exacte de cette variable et quelle est la distribution la mieux adaptée à ce problème
 
 La variable réponse pour cette étude est $Y_i$ = $DS_i$.
@@ -174,13 +196,13 @@ La variable $m_i$ = `r colnames(downs)[2]` devient une variable explicative *off
 
 Pour répondre à cette question nous procédons à l'ajustement de 03 modèles .
 
--   Le modèle 1 qui a comme variable explicative l'Age.
+-   Le modèle 1 qui a comme variable explicative l'*Age*.
     $log(\mu_i) = log(Births) + \beta_o + \beta_1 * Age$
 
--   Le modèle 2 qui a comme variables explicatives l'Age et son terme quadratique.
+-   Le modèle 2 qui a comme variables explicatives l'*Age* et son terme quadratique.
     $log(\mu_i) = log(Births) + \beta_o + \beta_1*Age + \beta_2*Age^2$
 
--   Le modèle 3 qui a comme variable explicative l'Age et ses termes quadratique
+-   Le modèle 3 qui a comme variable explicative l'*Age* et ses termes quadratique
 et cubique.
     $log(\mu_i) = log(Births) + \beta_o + \beta_1*Age + \beta_2*Age^2 + \beta_3*Age^3$
 
@@ -199,17 +221,17 @@ En considérant un seuil $\alpha = 0.05$, on obtient les résultats suivants à
 partir de la sortie R :
 
 -   Modèle 1 : Le seuil observé pour le test sur le coefficient $\beta_1$ est proche de 0.
-    Au seuil de signification $\alpha$ la variable Age est donc statistiquement significative selon le test de Wald.
+    Au seuil de signification $\alpha$ la variable *Age* est donc statistiquement significative selon le test de Wald.
 
 -   Modèle 2 : Les seuils observés pour les tests sur les coefficients $\beta_1$
 et $\beta_2$ sont proches de 0.
-    Au seuil de signification $\alpha$ la variable Age ainsi que son terme quadratique sont donc statistiquement significatifs selon le test de Wald.
+    Au seuil de signification $\alpha$ la variable *Age* ainsi que son terme quadratique sont donc statistiquement significatifs selon le test de Wald.
 
 -   Modèle 3 : Les seuils observés pour les tests sur les coefficients $\beta_1$
 et $\beta_2$ sont inférieurs à 0.05.
-    Au seuil de signification $\alpha$ la variable Age ainsi que son terme quadratique sont donc statistiquement significatifs selon le test de Wald.
+    Au seuil de signification $\alpha$ la variable *Age* ainsi que son terme quadratique sont donc statistiquement significatifs selon le test de Wald.
     Cependant le seuil observé pour le test associé au coefficient $\beta_3$ est 0.06922.
-    Le terme cubique de la variable Age n'est donc pas statistiquement significatif au seuil de signification $\alpha$ selon le test de Wald.
+    Le terme cubique de la variable *Age* n'est donc pas statistiquement significatif au seuil de signification $\alpha$ selon le test de Wald.
 
 ```{r question_c1}
 ## Réponse à la question
@@ -221,14 +243,11 @@ modele_poly_raw_2 <- glm(DS~offset(log(Births))+Age + I(Age^2),
 modele_poly_raw_3 <- glm(DS~offset(log(Births))+Age + I(Age^2)+I(Age^3),
                          family = poisson, data = downs)
 
-
 ##Seuil alpha pour les tests d'hypothèses : 5%
 #Test de Wald
-
 summary(modele_poly_raw_1) 
 summary(modele_poly_raw_2) 
 summary(modele_poly_raw_3) 
-
 
 ```
 
@@ -262,14 +281,11 @@ Nous procédons au calcul et à la comparaison de l'AIC pour ces trois modèles.
 Selon le critère de l'AIC, le modèle 3 est le meilleur car il est celui ayant le plus petit AIC.
 
 ```{r question_c3 AIC}
-
 ##AIC
-
 AIC <- rbind(Modele_1 = extractAIC(modele_poly_raw_1),
              Modele_2 = extractAIC(modele_poly_raw_2),
              Modele_3 = extractAIC(modele_poly_raw_3))
 colnames(AIC) <- c("p + 1", "AIC")
-
 AIC
 
 ```
@@ -278,8 +294,8 @@ AIC
 
 Le modèle final choisi est le modèle 2 puisque toutes les variables y sont significatives selon le test de Wald.
 De plus il s'agit du meilleur modèle selon le test de la déviance pour modèles emboîtés.
-Bien que l' AIC de ce modèle soit plus grand que celui du modèle 03, les valeurs sont proches pour ces deux modèles.
-Le polynôme de degré 2 pour la variable Age s’avère donc être le plus adapté à ces données.
+Bien que l'AIC de ce modèle soit plus grand que celui du modèle 3, les valeurs sont proches pour ces deux modèles.
+Le polynôme de degré 2 pour la variable *Age* s’avère donc être le plus adapté à ces données.
 
 ### d) Interpréter le modèle obtenu retenu au (c). Représenter graphiquement les valeurs prédites par le modèle en fonction de l'âge. Interpréter la figure obtenue et la comparer aux graphiques produits au (a). Est-ce qu'il y a un âge où le risque d'avoir une naissance avec le syndrome de Down est minimal ? maximal ?
 
@@ -287,11 +303,11 @@ La variable réponse est $Y_i$ = $DS_i$.
 Cette variable suit une loi de poisson de moyenne $\mu_i$.
 Selon le modèle retenu à la question précédente on a : $log(\mu_i) = log(Births)- 2.3425778 - 0.4071225*Age + 0.0084991*Age^2$.
 
-Selon ce modèle, la variable Age a deux impacts sur le modèle :
+Selon ce modèle, la variable *Age* a deux impacts sur le modèle :
 
--   effet simple de la variable Age avec $\hat\beta_1$: le nombre moyen de naissances avec le syndrôme de Down diminue lorsque l'âge des mères augmente.
+-   effet simple de la variable *Age* avec $\hat\beta_1$: le nombre moyen de naissances avec le syndrôme de Down diminue lorsque l'âge des mères augmente.
 
--   effet quadratique de la variable Age avec $\hat\beta_2$: à mesure que l'âge de la mère augmente, le nombre moyen de naissances avec le syndrôme de Down diminue jusqu'à une certaine valeur (cette valeur correspond à l'âge où le risque d'avoir une naissance avec le syndrôme de Down est minimal) puis augmente par la suite.
+-   effet quadratique de la variable *Age* avec $\hat\beta_2$: à mesure que l'âge de la mère augmente, le nombre moyen de naissances avec le syndrôme de Down diminue jusqu'à une certaine valeur (cette valeur correspond à l'âge où le risque d'avoir une naissance avec le syndrôme de Down est minimal) puis augmente par la suite.
 
 ```{r question_d1.1}
 ## d.1.1)Interpréter le modèle obtenu retenu au (c)
@@ -306,7 +322,6 @@ Puisque la dérivée seconde de la fonction $log(\mu_i)$ par rapport à la varia
 Ainsi, le risque d'avoir le syndrôme de Down est minimal lorsque l'âge de la mère est approximativement de 24 ans.
 
 ```{r question_d1.2}
-
 ## Pour avoir les âges min ou max on dérive la composante systémique 
 ## et on calcule l' âge x pour lequel la dérivée s'annule. 
 f <- function(x){modele_final$coefficients[2] + 2*modele_final$coefficients[3]*(x)}
@@ -317,7 +332,6 @@ age_DS_max_ou_min <- rootSolve::uniroot.all(f, c(17, 60))
 ##si la dérivée seconde est positive.
 f_2 <- unname(2*modele_final$coefficients[3])
 rbind("Age min ou max"  = age_DS_max_ou_min ,"Dérivée seconde" = f_2)
-
 ```
 
 Étant donné la différence dans le nombre de naissances total par groupe d'âge des mères, l'interprétation du graphique présentant le pourcentage estimé du nombre de naissances avec le syndrôme de Down nous parait plus appropriée.
@@ -331,9 +345,6 @@ Les différences notables sont que dans le graphique produit en a) le pourcentag
 ##de l'âge.
 
 predictions <- fitted(modele_final)
-
-# (predictions_manuelles <- exp(modele_final$coefficients[1] + modele_final$coefficients[2]*downs$Age +
-#                                modele_final$coefficients[3]*(downs$Age^2))*downs$Births) ##on obtient les mêmes valeurs qu'avec la fonction fitted
 
 x <- ggplot(data.frame(x = downs$Age, y = predictions), aes(x = x, y =  y)) +
             geom_point()+
@@ -373,9 +384,8 @@ p_value <- 1-pchisq(c(X2,D), df = n-p-1) ## les valeurs des seuils observés pou
 cbind("pvalue X2" = p_value[1], "pvalue D" = p_value[2])
 
 ##Vérification de l'extra-variabilité
-
 # phi.pearson
-phi.pearson <- X2/(n-p-1) ## L'estimateur de Pearson de phi est largement différent de 1 (1.58). Il y'a donc possiblement présence d'extra-variabilité.
+phi.pearson <- X2/(n-p-1) ## L'estimateur de Pearson de phi est largement différent de 1. Il y'a donc possiblement présence d'extra-variabilité.
 cat(paste0("phi.pearson  = ", phi.pearson))
 
 ```
@@ -385,10 +395,10 @@ Ces deux statistiques suivent approximativement une loi de Khi-deux à $n - p + 
 
 Les seuils observés pour ces deux statistiques d'ajustement sont respectivement `r p_value[1]` et `r p_value[2]`.
 Au seuil de signification $\alpha = 0.05$, le modèle retenu ne semble pas approprié pour les données.
-Bien que les graphiques des résidus de déviance et de Pearson semblent satisfaisants, le graphique des valeurs prédites de DS en fonction des valeur réelles suggère également un mauvais ajustement.
+Pourtant, les graphiques des résidus de déviance et de Pearson semblent satisfaisants (la majorité des résidus est entre -2 et 2 et les graphiques ne présentent aucune tendance particulière).
+Cependant, le graphique des valeurs prédites de DS en fonction des valeurs réelles suggère un mauvais ajustement. À notre avis, ce faible ajustement est normal du fait de la petite taille de l'échantillon (30 observations). Cependant, le modèle permet de capturer la relation entre les variables *Age* et *Ds*. 
 
-Par ailleurs, l'estimateur de Pearson de phi est largement différent de 1 (`r phi.pearson`).
-Il y'a donc possiblement présence d'extra-variabilité.
+Par ailleurs, l'estimateur de Pearson de phi est largement différent de 1 (`r phi.pearson`). Il y'a donc possiblement présence d'extra-variabilité.
 
 ```{r question_e_part2, echo=FALSE}
 
@@ -396,12 +406,6 @@ Il y'a donc possiblement présence d'extra-variabilité.
 
 res_deviance <- resid(modele_final)
 res_pearson <- resid(modele_final, type = "pearson")
-#(res_pearson2 <- statmod::qresid(modele_final)) ##
-#(res_pearson3 <- (downs$DS-predictions)/sqrt(predictions))
-
-## sum(res_pearson2-res_pearson) # je n'obtiens pas les mêmes valeurs avec les deux méthodes ??
-## sum(res_pearson3-res_pearson) # j'obtiens pas les mêmes valeurs avec les deux méthodes 
-
 
 
 x <- ggplot(data.frame(x = 1:30, y = res_pearson), aes(x = x, y =  y)) +
@@ -456,28 +460,28 @@ h <- hatvalues(modele_final)
 # Résidus de deviance standardisés est studentisés
 res_D <- cbind("r'D"= rstandard(modele_final), "r''D"= rstudent(modele_final))
 
-## Detection des observations aberrantes
+## Détection des observations aberrantes
 (indices_resD <- apply(abs(res_D), 2, function(x){which(abs(x)>=3)}) )
 
 ## Detection des observations influentes
 
-(indices_h <- which(h>(3*(p+1)/n))) #observation 30
+(indices_h <- which(h>(3*(p+1)/n))) 
 
 d1 <- cooks.distance(modele_final)
 #max(d1) ## a comparer avec 1 et avec qf(0.5,p+1,n-(p+1))
 #qf(0.5,p+1,n-(p+1))
-(indice_cook <- which(d1>qf(0.5,p+1,n-(p+1)))) #observation 30
+(indice_cook <- which(d1>qf(0.5,p+1,n-(p+1)))) 
 
 d2 <- dffits(modele_final) 
 #max(abs(d2)) ## a comparer avec 3p/n
 #3*p/n
-(indices_dffits <- which(as.vector(abs(d1))>3*p/n)) #observation 30
+(indices_dffits <- which(as.vector(abs(d1))>3*p/n))
 
 d3 <- dfbetas(modele_final)
 #max(abs(d3)) ## a comparer avec 3/racine.carre(n)
 #3/sqrt(n)
 d3.matrice <- abs(d3)>3/sqrt(n)
-(indices_dfbetas <- which(as.vector(rowSums(d3.matrice))>0)) #observation 30
+(indices_dfbetas <- which(as.vector(rowSums(d3.matrice))>0)) 
 
 d4 <- covratio(modele_final)
 #max(abs(1-d4)) ## a comparer avec 3p/n
@@ -490,9 +494,9 @@ intersect(intersect(indices_dffits,indices_dfbetas),indices_covratio)
 ```
 
 L'observation 30 semble être aberrante.
-En effet, cette obsersation a des résidus de déviance standardisés et studentisés supérieurs à 3 en valeur absolu (`r abs(res_D[indices_resD[1],])`).
+En effet, cette observation a des résidus de déviance standardisés et studentisés supérieurs à 3 en valeur absolu (`r abs(res_D[indices_resD[1],])`).
 Cette observation a un levier important et est déclarée influente selon les critères : distance de Cook, DFFITS, DFBETAS et le rapport de covariance.
-Les obsersavations 1, 2, 3, 5, 7, 11, 26, 27 et 29 ont été déclarées influentes selon le rapport de covariance mais pas selon les autres critères.
+Les observations 1, 2, 3, 5, 7, 11, 26, 27 et 29 ont été déclarées influentes selon le rapport de covariance mais pas selon les autres critères.
 
 #### Gestion de la variabilité extra-poissonière : modèle avec la loi binomiale négative
 
@@ -503,7 +507,7 @@ Les paramètres de ce modèle sont $\alpha$ et $\beta$ et on retrouve la régres
 Un avantage intéressant pour ce modèle est qu'il nous permet de tester l'hypothèse nulle $H_0$ : $\alpha = 0$.
 À cet effet, on ajuste le modèle poisson et le modèle avec une loi binomiale négative et on calcule les déviances des deux modèles, disons $D_0$ et $D_1$.
 La statistique du test sera alors $Q_{obs}  = D_0 - D_1$.
-Sous l'hypothèse nulle $H_0$ : on a $Q \sim \frac{1}{2}\chi^2_0 + \frac{1}{2}\chi^2_1$ car on teste sur la limite de son domaine de défnition.
+Sous l'hypothèse nulle $H_0$ : on a $Q \sim \frac{1}{2}\chi^2_0 + \frac{1}{2}\chi^2_1$ car on teste sur la limite de son domaine de définition.
 Le seuil observé est égal à $P(\chi^2_1 > Q_{obs})/2$.
 
 ```{r modèle avec la loi binomiale négative, echo=TRUE}
@@ -516,10 +520,34 @@ pvalue
 
 ```
 
-À la suite de l'ajustement du modèle, On rejette l'hypothèse nulle $H_0$ car le seuil observé est proche de 0.
-Il y'a présence de variabilité extra-poissonière dans les données et l'ajustement du modèle avec la loi binomiale négative semble plus approprié pour ces données.
+À la suite de l'ajustement du modèle, On rejette l'hypothèse nulle $H_0$ car le seuil observé est proche de 0. Il y'a présence de variabilité extra-poissonière dans les données et l'ajustement du modèle avec la loi binomiale négative semble plus approprié pour ces données.
 
 ```{r modèle avec la loi binomiale négative 2, echo=FALSE}
+
+x <- ggplot(data.frame(x = downs$Age, y = fitted(modele_NB)/downs$Births), aes(x = x, y =  y)) +
+            geom_point()+
+            scale_y_continuous(labels = scales::percent) +
+            labs(x = "Age", y = "Pourcentage de DS estimé (%)") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Pourcentage DS estimé en fonction de l'âge")
+            
+             
+x
+
+
+x <- ggplot(data.frame(x = downs$DS, y = fitted(modele_NB)), aes(x = x, y =  y)) +
+            geom_point() +
+            xlim(c(10,40)) +
+            ylim(c(10,40)) +
+            geom_abline(intercept = 0, slope = 1) +
+            labs(x = "DS - valeur réelle", y = "DS - valeur prédite") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Valeurs de DS réelles vs prédites")
+            
+             
+x
 
 res_deviance_NB <- resid(modele_NB)
 res_pearson_NB <- resid(modele_NB, type = "pearson")
@@ -551,18 +579,7 @@ x <- ggplot(data.frame(x = 1:30, y = res_deviance_NB), aes(x = x, y =  y)) +
              
 x
 
-x <- ggplot(data.frame(x = downs$DS, y = fitted(modele_NB)), aes(x = x, y =  y)) +
-            geom_point() +
-            xlim(c(10,40)) +
-            ylim(c(10,40)) +
-            geom_abline(intercept = 0, slope = 1) +
-            labs(x = "DS - valeur réelle", y = "DS - valeur prédite") +
-            theme_bw() +
-            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
-            ggtitle("Valeurs de DS réelles vs prédites")
-            
-             
-x
+
 ```
 
 Avec ce modèle, l'observation 30 a toujours un levier important et est déclarée influente selon les critères : distance de Cook, DFFITS, DFBETAS et le rapport de covariance.
@@ -611,15 +628,8 @@ intersect(intersect(indices_dffits_NB,indices_dfbetas_NB),indices_covratio_NB)
 
 ```
 
-```{r modèle avec la loi binomiale négative 4, echo = TRUE}
-## Ajustement de la binomiale négative sans l'oservation 30
 
-modele_NB_sans <- glm.nb(DS~offset(log(Births)) + Age + I(Age^2),link  ="log",
-                         data = downs[-30,])
+#### Conclusion :
 
-summary(modele_NB_sans)
-
-```
-
-En ajustant la binomiale négative sans l'observation 30, les paramètres du modèle changent.
-L'AIC du modèle obtenu est aussi plus petit `r extractAIC(modele_NB_sans)[2]` que celui du modèle précédent `r extractAIC(modele_NB)[2]`.
+Le modèle ajusté avec la loi binomiale négative semble plus adéquat pour ces données à cause de la variabilité extra-poissonnière. Les graphiques des résidus de déviance et de Pearson sont satisfaisants (la majorité des résidus est entre -2 et 2 et les graphiques ne présentent aucune tendance particulière). La déviance résiduelle du modèle est de $29.409$.
+Avec ce modèle, le graphique des valeurs prédites de DS en fonction des valeurs réelles suggère encore un mauvais ajustement. À notre avis, ce faible ajustement est normal du fait de la petite taille de l'échantillon (30 observations). Cependant, le modèle permet de capturer la relation entre les variables *Age* et *Ds*. 
