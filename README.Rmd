@@ -376,11 +376,19 @@ Selon la variable Swim, les nageurs sont répartis de façon équilibrée entre 
 
 Concernant la localisation (Loc), il y a un peu plus de personnes nageant à la place comparé à ailleurs. la proportion d'infection est visiblement plus faible lorsque la nage a lieu à la Mer (Beach) par rapport à la nage ailleurs qu'à la mer.<br>
 
-On observe davantage d’hommes que de femmes. La proportion d'infection est très similaire entre les sexes, avec une légère tendance à être plus faible chez les Femmes par rapport aux Hommes.<br>
+On observe que la proportion d'hommes (65.5%) est beaucoup plus élevé que celle des femmes (34.5%). La proportion d'infection est très similaire entre les sexes, avec une légère tendance à être plus faible chez les Femmes par rapport aux Hommes.<br>
 
-Enfin, il y a beaucoup plus de nageurs entre 15 et 19 ans. Les jeunes de 25 à 29 ans sont les moins nombreux des 3 catégories. De plus, il n'y a pas de différence notable dans la proportion d'infection à travers les trois catégories d'âge, on peut se douter que l'âge pourrait ne pas être significatif.
+Il y a beaucoup plus de nageurs entre 15 et 19 ans (48.8%). Les jeunes de 25 à 29 ans sont les moins nombreux des 3 catégories avec seulement 68 nageurs de cette tranche d'âge. De plus, il n'y a pas de différence notable dans la proportion d'infection à travers les trois catégories d'âge, on peut se douter que l'âge pourrait ne pas être significatif.
+
+Enfin, 47.4% des nageurs ont une infection de l'oreille.
+
 ```{r stat1}
-summary(earinf)
+knitr::kable(
+  frequence_df,
+  caption   = "Fréquences et proportions par variable (n = 287)",
+  col.names = c("Variable", "Modalité", "Effectif (n)", "Pourcentage (%)"),
+  align     = "lrrr"
+)
 graph1 ; graph2
 ```
 
