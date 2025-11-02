@@ -567,7 +567,7 @@ Le fait de nager ailleurs qu'à la mer augmente le risque d'infection de 3.36% e
 
 Ensuite, les hommes ont une cote d'infection 0.6286 fois plus que celle des femmes.<br>
 
-Enfin, chez les hommes, le fait de nager ailleurs qu'à la mer a un risque $e^{1.05835+0.03307} = 2.9785$ fois plus élevé.
+Enfin, chez les hommes, le fait de nager ailleurs qu'à la mer a un risque $e^{1.05835+0.03307} = 2.9785$ fois plus élevé. L'interaction entre le lieu de la nage et le sexe masculin est significative sur le risque d'infection de l'oreille.
 
 
 ## Valeurs influentes, aberrantes et extravariabilité
