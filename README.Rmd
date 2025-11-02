@@ -95,23 +95,6 @@ ggplot(data = Salary) +
     axis.text = element_text(size = 12)
   )
 
-vars <- c("Swim", "Loc", "Sex", "Age", "Infec")
-
-freq <- function(data, var_name) {
-  x <- data[[var_name]]
-  counts <- if (is.factor(x)) table(x, useNA = "no") else table(as.character(x))
-  props  <- prop.table(counts) * 100
-
-  data.frame(
-    Variable    = var_name,
-    Modalité    = names(counts),
-    Effectif    = as.integer(counts),
-    Pourcentage = round(as.numeric(props), 2),
-    stringsAsFactors = FALSE
-  )
-}
-
-frequence_df <- do.call(rbind, lapply(vars, function(v) freq(earinf, v)))
 ```
 
 Le diagramme en boîte ci-dessus indique une augmentation du salaire avec un dernier diplôme obtenu de plus haut niveau. On observe le salaire avec comme dernier diplôme un baccalauréat, une maîtrise et un doctorat. Toutes les mesures de position montrées par le diagramme (quartiles, médiane, minimum, maximum et valeurs potentiellement aberrantes) montrent une augmentation en fonction du diplôme. 
@@ -385,6 +368,24 @@ graph2<-(g5 + g6 + g7 + g8) +
     title = "Proportion d'infection selon les variables explicatives - bivariée",
     theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
   )
+vars <- c("Swim", "Loc", "Sex", "Age", "Infec")
+
+freq <- function(data, var_name) {
+  x <- data[[var_name]]
+  counts <- if (is.factor(x)) table(x, useNA = "no") else table(as.character(x))
+  props  <- prop.table(counts) * 100
+
+  data.frame(
+    Variable    = var_name,
+    Modalité    = names(counts),
+    Effectif    = as.integer(counts),
+    Pourcentage = round(as.numeric(props), 2),
+    stringsAsFactors = FALSE
+  )
+}
+
+frequence_df <- do.call(rbind, lapply(vars, function(v) freq(earinf, v)))
+
 ```
 
 En explorant les données, on remarque que toutes les variables explicatives à l'étude sont catégorielles.<br>
