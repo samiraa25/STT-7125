@@ -1,7 +1,7 @@
 ---
 title: "STT-7125"
 subtitle: "Devoir 1"
-author: "Caroline Schomacker (536 995 219) -
+author: "Caroline Schomaker (536 995 219) -
          Samira Amani (111 248 078) -
          Yasmine Yonli ( )"
 date: "2025-11-02"
