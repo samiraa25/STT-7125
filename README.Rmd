@@ -3,27 +3,40 @@ title: "STT-7125"
 subtitle: "Devoir 1"
 author: "Caroline Schomaker (536 995 219) -
          Samira Amani (111 248 078) -
-         Yasmine Yonli ( )"
+         Yasmine Yonli (111 143 224 )"
 date: "2025-11-02"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+if (!require("GLMsData")) install.packages("GLMsData")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("scales")) install.packages("scales") 
+if (!require("rootSolve")) install.packages("rootSolve")
+if (!require("statmod")) install.packages("statmod")
+if (!require("car")) install.packages("car")
+if (!require("clinfun")) install.packages("clinfun")
+if (!require("patchwork")) install.packages("patchwork")
+if (!require("MASS")) install.packages("MASS")
+
+
 library(ggplot2)
 library(car)
 library(patchwork)
 library("statmod")
 library("clinfun")
 library("GLMsData")	
+library("scales") 
+library("rootSolve") 
+library("statmod") 
+library("MASS") 
 
 ```
 
 ## Question 1
 
 ### 1a
-
-Voici les graphiques présentant les données sur le jeu de données sur le salaire des employés en fonction du dernier diplôme obtenu, du nombre d’années d’expérience et du nombre de personnes supervisées par l’employé.
-Nous avons d’abord les graphiques du salaire en fonction d’une des variables explicatives.
 
 ```{r, echo=FALSE}
 Salary <- read.table("data/salaires.txt")
@@ -35,12 +48,84 @@ Salary$experience <- as.numeric(Salary$experience)
 Salary$nombre <- as.numeric(Salary$nombre)
 ```
 
+Le jeu de données à l'étude pour la question 1 contient 65 observations de 04 variables qui sont : *salaire*, *diplome*, *experience* et *nombre*.
+
+- La variable *salaire* est numérique. Elle prend les valeurs entre 29 et 163.70. Le salaire moyen est de 60.02. Il y'a une grande différence entre le 3e quartile (70.6) et le salaire maximal (163.70).
+
+- La variable *diplome* est catégorielle. Elle prend les valeurs : 1 (baccalauréat), 2 (maîtrise) et 3 (doctorat). La base de données est constituée en majorité d'employés ayant la maîtrise comme dernier diplôme obtenu suivi du doctorat et du baccalauréat.
+    
+- La variable *experience* est numérique et prend des valeurs entre 0.14 et 29.54. Le jeu de données est majoritairement constitué d'employés ayant moins de 10 ans d'expérience depuis le dernier diplôme obtenu.
+
+- La variable *nombre* est numérique et prend des valeurs entre 0 et 42. On observe que la majorité des employés n'ont aucune personne sous leur supervision.
+
+
+```{r}
+summary(Salary)
+
+x <- ggplot(Salary, aes(x = salaire)) +
+            geom_histogram(color = "black", fill = "#56B4E9", bins = 30) + 
+            labs(x = "Salaire", y = "Fréquence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5),
+                  axis.title = element_text(size = 14),
+                  axis.text = element_text(size = 12)) +
+            ggtitle("Histogramme de Salaire")
+            
+             
+x
+
+x <- ggplot(Salary, aes(x = factor(diplome, 
+                                   labels = c("Baccalauréat", "Maîtrise",
+                                              "Doctorat")))) +
+            geom_bar(color = "black", fill = "#56B4E9", bins = 15) + 
+            labs(x = "diplome", y = "Fréquence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5),
+                  axis.title = element_text(size = 14),
+                  axis.text = element_text(size = 12)) +
+            ggtitle("Répartition de la variable diplome")
+            
+             
+x
+
+x <- ggplot(Salary, aes(x = experience)) +
+            geom_histogram(color = "black", fill = "#56B4E9", bins = 30) + 
+            labs(x = "experience", y = "Fréquence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5),
+                  axis.title = element_text(size = 14),
+                  axis.text = element_text(size = 12)) +
+            ggtitle("Histogramme de experience")
+            
+             
+x
+
+x <- ggplot(Salary, aes(x = nombre)) +
+            geom_histogram(color = "black", fill = "#56B4E9", bins = 30) + 
+            labs(x = "nombre", y = "Fréquence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5),
+                  axis.title = element_text(size = 14),
+                  axis.text = element_text(size = 12)) +
+            ggtitle("Histogramme de nombre")
+            
+             
+x
+
+
+```
+
+La suite de cette section présente des graphiques bivariés et multivariés qui nous permettront de saisir la relation entre la variable *salaire* et les variables *diplome*, *experience* et *nombre*.
+
+Nous présentons d’abord les graphiques du salaire en fonction d’une des variables explicatives.
+
 ```{r, echo=FALSE}
 ggplot(data=Salary) +
   geom_point(mapping=aes(x = experience, y = salaire)) +
   scale_x_continuous(n.breaks = 6) +
   scale_y_continuous(n.breaks = 5) +
   labs(title = "Salaire en fonction du nombre d'années d'expérience", x = "Nombre d'années d'expérience", y = "Salaire") +
+  theme_bw()+
   theme(
     plot.title = element_text(hjust = 0.5, size = 15, face = "bold"),
     axis.title = element_text(size = 14),
@@ -48,7 +133,7 @@ ggplot(data=Salary) +
   )
 ```
 
-Nous remarquons ici que le salaire des employés a tendance à augmenter avec le nombre d’années d’expérience, ce qui est intuitif car plus les employés ayant travaillé plus longtemps ont plus de promotions en raison de leur loyauté et niveau d’expertise. 
+Nous remarquons ici que le salaire des employés a tendance à augmenter avec le nombre d’années d’expérience, ce qui est intuitif car les employés ayant travaillé plus longtemps ont plus de promotions en raison de leur loyauté et leur niveau d’expertise. 
 
 ```{r, echo=FALSE}
 ggplot(data=Salary) +
@@ -56,6 +141,7 @@ ggplot(data=Salary) +
   scale_x_continuous(n.breaks = 6) +
   scale_y_continuous(n.breaks = 5) +
   labs(title = "Salaire en fonction du nombre de personnes supervisées", x = "Nombre de personnes supervisées", y = "Salaire") +
+  theme_bw()+
   theme(
     plot.title = element_text(hjust = 0.5, size = 15, face = "bold"),
     axis.title = element_text(size = 14),
@@ -63,16 +149,17 @@ ggplot(data=Salary) +
   )
 ```
 
-Le salaire augmente aussi avec le nombre de personnes supervisées par l’employé, mais puisqu’il y a un nombre important d’employés dans la base qui ne surveille personne, il y a une plus grande densité autour de la valeur 0 et donc une précision plus faible pour cette variable. Il y a 42 employés qui ne supervisent personne, donc le graphique est un peu moins significatif. 
+Le salaire augmente aussi avec le nombre de personnes supervisées par l’employé.  Cependant, on observe une grande concentration au niveau de la valeur 0 car il y a un nombre important d’employés (42) dans le jeu de données qui n'ont aucun employé sous leur supervision. Cela suggère une précision plus faible pour cette variable. À notre avis, ce graphique est un peu moins significatif. 
 
-Regardons un graphique du salaire en fonction du nombre de personnes supervisées en omettant les non-superviseurs.
+Regardons plutôt le graphique du salaire en fonction du nombre de personnes supervisées en omettant les non-superviseurs.
 
 ```{r, echo=FALSE}
 ggplot(data=Salary[Salary$nombre != 0, ]) +
   geom_point(mapping=aes(x = nombre, y = salaire)) +
   scale_x_continuous(n.breaks = 6) +
   scale_y_continuous(n.breaks = 5) +
-  labs(title = "Salaire en fonction du nombre de personnes supervisées par les superviseurs", x = "Nombre de personnes supervisées", y = "Salaire") +
+  labs(title = "Salaire en fonction du nombre de personnes\n supervisées par les superviseurs", x = "Nombre de personnes supervisées", y = "Salaire") +
+  theme_bw()+
   theme(
     plot.title = element_text(hjust = 0.5, size = 15, face = "bold"),
     axis.title = element_text(size = 14),
@@ -81,23 +168,23 @@ ggplot(data=Salary[Salary$nombre != 0, ]) +
 ```
 
 Dans celui-ci nous voyons plus clairement l’influence du nombre d’employés supervisés sur le salaire. 
+
 ```{r, echo=FALSE}
 ggplot(data = Salary) + 
   geom_boxplot(mapping = aes(x = factor(diplome, labels = c("Baccalauréat", "Maîtrise", "Doctorat")), y = salaire)) +
   labs(
     title = "Salaire en fonction du dernier diplôme obtenu",
-    x = "Diplome",
+    x = "Diplôme",
     y = "Salaire"
-  ) +
+  ) + 
+  theme_bw()+
   theme(
     plot.title = element_text(hjust = 0.5, size = 15, face = "bold"),
     axis.title = element_text(size = 14),
     axis.text = element_text(size = 12)
   )
-
 ```
-
-Le diagramme en boîte ci-dessus indique une augmentation du salaire avec un dernier diplôme obtenu de plus haut niveau. On observe le salaire avec comme dernier diplôme un baccalauréat, une maîtrise et un doctorat. Toutes les mesures de position montrées par le diagramme (quartiles, médiane, minimum, maximum et valeurs potentiellement aberrantes) montrent une augmentation en fonction du diplôme. 
+On observe le salaire avec comme dernier diplôme un baccalauréat, une maîtrise et un doctorat. Le diagramme en boîte ci-dessus indique un salaire plus élevé avec un dernier diplôme obtenu de plus haut niveau.  Toutes les mesures de position montrées par le diagramme (quartiles, médiane, minimum, maximum et valeurs potentiellement aberrantes) montrent une augmentation en fonction du diplôme. 
 
 Regardons maintenant le salaire en fonction de deux variables explicatives.
 
@@ -109,12 +196,13 @@ ggplot(data = Salary) +
     colour = nombre
   )) +
   labs(
-    title = "Salaire en fonction de l'expérience et du nombre d'employés supervisés",
+    title = "Salaire en fonction de l'expérience \n et du nombre d'employés supervisés",
     x = "Nombre d'années d'expérience",
     y = "Salaire",
     colour = "Nombre d'employés \nsupervisés"
   ) + scale_colour_viridis_c() +
   facet_wrap(facets =~ factor(diplome, labels = c("Baccalauréat", "Maîtrise", "Doctorat"))) +
+  theme_bw()+
   theme(
     plot.title = element_text(hjust = 0.5, size = 15, face = "bold"),
     axis.title = element_text(size = 14),
@@ -122,11 +210,12 @@ ggplot(data = Salary) +
   )
 ```
 
-Ces graphiques montrent à la fois l’influence du nombre d’employés supervisés et le nombre d’années d’expérience sur le salaire, et les deux semblent l’influencer linéairement.
+Ces graphiques montrent à la fois l’influence du nombre d’employés supervisés et du nombre d’années d’expérience sur le salaire, et les deux semblent l’influencer linéairement.
 
 ```{r, echo=FALSE}
 ggplot(data = Salary, aes(x = experience, y = salaire, color = factor(diplome, labels = c("Baccalauréat", "Maîtrise", "Doctorat")))) +
-  geom_point() + theme_bw() + labs(title="Le salaire en fonction du nombre d'années d'expérience et du diplôme", x="Nombre d'années d'expérience", y="Salaire", color = "Diplôme") +
+  geom_point() + theme_bw() + labs(title="Le salaire en fonction du nombre \n d'années d'expérience et du diplôme", x="Nombre d'années d'expérience", y="Salaire", color = "Diplôme") +
+  theme_bw()+
   theme(
     plot.title = element_text(hjust = 0.5, size = 15, face = "bold"),
     axis.title = element_text(size = 14),
@@ -138,7 +227,8 @@ Le salaire augmente de façon assez claire en fonction du nombre d’années d�
 
 ```{r, echo=FALSE}
 ggplot(data = Salary, aes(x = nombre, y = salaire, color = factor(diplome, labels = c("Baccalauréat", "Maîtrise", "Doctorat")))) +
-  geom_point() + theme_bw() + labs(title="Le salaire en fonction du nombre d'employés supervisés et du diplôme", x="Nombre d'employés supervisés", y="Salaire", color = "Diplôme") +
+  geom_point() + theme_bw() + labs(title="Le salaire en fonction du nombre \n d'employés supervisés et du diplôme", x="Nombre d'employés supervisés", y="Salaire", color = "Diplôme") +
+  theme_bw()+
   theme(
     plot.title = element_text(hjust = 0.5, size = 15, face = "bold"),
     axis.title = element_text(size = 14),
@@ -146,42 +236,127 @@ ggplot(data = Salary, aes(x = nombre, y = salaire, color = factor(diplome, label
   )
 ```
 
-Enfin, on remarque dans ce graphique une augmentation du salaire en fonction du nombre d’employés supervisés et une délimitation du dernier diplôme. Cependant, il est encore moins clair en raison du grand nombre de personnes ne supervisant aucun employé. 
+Enfin, on remarque dans le graphique ci-dessus une augmentation du salaire en fonction du nombre d’employés supervisés et une délimitation du dernier diplôme. Cependant, il est encore moins clair en raison du grand nombre de personnes ne supervisant aucun employé. 
 
-Les graphiques indiquent alors une augmentation du salaire en fonction des trois variables explicatives et nous nous attendons donc à ce qu’elles exercent une influence significative sur la variable réponse. La variable sur le nombre d’employés supervisés est moins claire puisqu’il y a beaucoup de non-superviseurs et il est concevable d’avoir un grand salaire sans superviser, mais en omettant ces personnes, nous avons une augmentation également.
+Les graphiques suggèrent globalement une relation positive entre la variable *salaire* et les variables *nombre*, *diplome* et *experience*. Dans la suite de notre analyse, nous nous attendons donc à ce que ces variables exercent une influence significative sur la variable réponse. 
+Toutefois, l'impact de la  variable *nombre* (nombre d’employés supervisés) est moins claire puisque la base de données est constituée en majorité de non-superviseurs et il est concevable d’avoir un salaire élevé sans avoir à superviser.
 
 ### 1b
 
 Étudions la multicolinéarité de ces données avec le facteur d’inflation de la variance (VIF) et puis les coefficients de corrélations entre les variables explicatives. 
 
-Nous avons d’abord établi le modèle linéaire avec toutes les variables explicatives, puis nous avons calculé le VIF pour chacune des variables explicatives. Nous obtenons un VIF d’environ 1,1 pour le diplôme, 1,7 pour l’expérience et de 1,8 pour le nombre d’employés supervisés. Ces valeurs sont tous plus petits que 2, ce qui est assez bas et donc nous ne suspectons pas de multicolinéarité. 
+Nous avons d’abord ajusté un modèle linéaire avec toutes les variables explicatives, puis nous avons calculé le VIF pour chacune des variables explicatives. Nous obtenons un VIF d’environ 1.1 pour le diplôme, 1.7 pour l’expérience et de 1.8 pour le nombre d’employés supervisés. Ces valeurs sont
+toutes plus petites que 2, ce qui est assez bas. Nous ne suspectons donc pas de multicolinéarité. 
 
-Calculons également les coefficients de corrélation entre les variables explicatives. Nous obtenons environ 0,64 pour le nombre de personnes supervisées et l’expérience, 0,30 pour le nombre d’employés supervisés et le diplôme et 0,23 pour le diplôme et l’expérience. Le coefficient entre le nombre de personnes supervisées et l’expérience est plus élevée que les autres donc il pourrait y avoir une multicolinéarité.
+```{r}
+modele <- lm(salaire ~ factor(diplome) + experience + nombre, data = Salary)
+vif(modele)
+```
+
+
+Calculons également les coefficients de corrélation entre les variables explicatives. Nous obtenons environ 0.64 pour le nombre de personnes supervisées et l’expérience, 0.30 pour le nombre de personnes supervisés et le diplôme et 0.22 pour le diplôme et l’expérience. 
+Notons que le coefficient de corrélation entre le nombre de personnes supervisées et l’expérience est plus élevée que les autres : cela pourrait suggérer la présence de multicolinéarité. Par contre avec les valeurs obtenues pour le VIF, nous concluons que ces données ne présentent pas une forme de multicolinéarité problématique.
+
+```{r}
+cor(Salary)
+```
+
 
 ### 1c
 
-À partir du modèle complet (toutes les variables explicatives et leurs interactions) et du modèle vide, nous avons utilisé les procédures forward, backward et stepwise. Les trois modèles retiennent le même modèle, celui avec toutes les variables explicatives ainsi que l’interaction entre le nombre d’employés supervisés et le dernier diplôme obtenu. Ce modèle a un AIC d’environ 292,31.
+À partir du modèle complet (toutes les variables explicatives et leurs interactions) et du modèle vide, nous avons utilisé les procédures *forward*, *backward* et *stepwise* afin de sélectionner le modèle le plus adéquat pour ces données. Les trois méthodes retiennent le même modèle : celui avec toutes les variables explicatives ainsi que l’interaction entre le nombre d’employés supervisés et le dernier diplôme obtenu. Ce modèle a un AIC d’environ 292.31.
+
+#### Méthode forward
+```{r}
+modele_min <- lm(salaire ~ 1, data = Salary)
+modele_max <- lm(salaire ~ (factor(diplome) + experience + nombre)^2, data = Salary)
+step(modele_min,direction="forward",scope=list(lower=modele_min,upper=modele_max))
+
+```
+#### Méthode backward
+```{r}
+step(modele_max,direction="backward",scope=list(lower=modele_min,upper=modele_max))
+
+```
+
+#### Méthode stepwise
+```{r}
+step(modele_min,direction="both",scope=list(lower=modele_min,upper=modele_max))
+
+```
+
+#### Meilleur modèle
+
+Le meilleur modèle est le suivant :
+
 
 ```{r, echo=FALSE}
 best_modele <- lm(salaire ~ factor(diplome) + experience + nombre + nombre:factor(diplome), data = Salary)
 summary(best_modele)
 ```
 
-Ci-dessus se trouvent les coefficients de ce modèle. L’intercept de 30,337 indique l’ordonnée à l’origine, donc le salaire de l’employé s’il a comme dernier diplôme un baccalauréat, aucune expérience et ne supervise personne. Les coefficients associés au diplôme indiquent que pour une même expérience et nombre de personnes supervisées, une personne avec une maîtrise reçoit 9,323 de plus qu’une personne avec un baccalauréat, et un doctorat apporte 26,641 de plus qu’un baccalauréat seul. Les coefficients pour l’expérience et le nombre de supervisés signifient que pour chaque année de plus d’expérience, en moyenne un employé à un salaire augmenté de 1,235, et pour chaque personne supervisée de plus, l’employé reçoit 3,431 de plus. Enfin, pour les coefficients d’interaction entre le diplôme et le nombre d’employés supervisés, nous apprenons que le nombre de supervisés apporte 0,504 de moins pour une personne avec maîtrise que qu'avec un baccalauréat, et 1,990 de moins pour une personne avec doctorat qu’avec un baccalauréat.
+Ci-dessus se trouvent les coefficients de ce modèle. 
+- L’intercept de 30.337 indique l’ordonnée à l’origine, donc le salaire moyen de l’employé s’il a comme dernier diplôme un baccalauréat, aucune expérience et ne supervise personne. 
+- Les coefficients associés à la variable *diplôme* indiquent que pour des valeurs identiques des variables *nombre* et *experience* une personne avec comme dernier diplôme obtenu une maîtrise a en moyenne un salaire plus élevé de 9.323 par rapport à une personne dont le dernier diplôme obtenu est  un baccalauréat. Par ailleurs, une personne avec le doctorat comme dernier diplôme obtenu a en moyenne un salaire plus élevé de 26.641 par rapport à une personne dont le dernier diplôme obtenu est  un baccalauréat.
+- Les coefficients associés aux variables *expérience* et *nombre* signifient que pour chaque année de plus d’expérience, en moyenne un employé a un salaire augmenté de 1.235, et pour chaque personne supervisée de plus, l’employé reçoit 3.431 de plus en salaire.
+- Enfin, pour les coefficients associés aux interactions entre le diplôme et le nombre d’employés supervisés, nous apprenons que par rapport à une personne ayant le baccalauréat comme dernier diplôme, pour une personne supervisée de plus une personne ayant la maîtrise comme dernier diplôme perd en moyenne 0.504 de salaire et une personne ayant le doctorat comme dernier diplôme perd en moyenne 1.990.
 
 ### 1d
 
-Nous avons créé la variable supervision avec 0 si l’employé ne supervise personne et 1 sinon, puis avons répété les mêmes procédures. Les trois méthodes retiennent le même modèle, mais cette fois-ci celui avec les trois variables explicatives et l’interaction entre le nombre d’employés supervisés et l’expérience (au lieu du nombre de supervisés et le diplôme). Voici les coefficients de ce modèle.
+Nous avons créé la variable *supervision* avec 0 si l’employé ne supervise personne et 1 sinon, puis nous avons répété les mêmes procédures qu'en c). Les trois méthodes retiennent le même modèle, mais cette fois-ci il s'agit du modèle avec les trois variables explicatives (*supervision*,*diplome*,*nombre*) et l’interaction entre le nombre d’employés supervisés et l’expérience (au lieu du nombre de personnes supervisées et le diplôme). 
 
 ```{r, echo=FALSE}
 Salary$supervision <- ifelse(test = Salary$nombre > 0, yes = 1, no = 0)
+modele_min <- lm(salaire ~ 1, data = Salary)
+modele_max <- lm(salaire ~ (factor(diplome) + experience + factor(supervision))^2, data = Salary)
+
+```
+
+#### Méthode forward
+```{r}
+step(modele_min,direction="forward",scope=list(lower=modele_min,upper=modele_max))
+
+```
+
+
+#### Méthode backward
+```{r}
+step(modele_max,direction="backward",scope=list(lower=modele_min,upper=modele_max))
+
+```
+
+#### Méthode stepwise
+
+```{r}
+step(modele_min,direction="both",scope=list(lower=modele_min,upper=modele_max))
+
+```
+
+
+#### Meilleur modèle
+
+Voici les coefficients du modèle retenu.
+
+```{r, echo=FALSE}
 best_modele_supervision <- lm(salaire ~ experience+factor(supervision)+factor(diplome)+factor(supervision):experience, data=Salary)
 summary(best_modele_supervision)
 ```
 
-Interprétons ces coefficients. L’intercept de 28,5104 indique l’ordonnée à l’origine, donc le salaire de l’employé s’il a comme dernier diplôme un baccalauréat, aucune expérience et ne supervise personne. Les coefficients associés au diplôme indiquent que pour une même expérience et nombre de personnes supervisées, une personne avec une maîtrise reçoit 13,8165 de plus qu’une personne avec un baccalauréat, et un doctorat apporte 27,8193 de plus qu’un baccalauréat seul. Le coefficient pour l’expérience signifie que pour chaque année de plus d’expérience, en moyenne un employé à un salaire augmenté de 1,2878. Le coefficient pour la supervision dit qu’un superviseur reçoit en moyenne 0,7207 de moins qu’un non-superviseur. Enfin, pour le coefficient d’interaction entre l'expérience et le nombre d’employés supervisés, nous apprenons que le nombre d’années d’expérience apporte 1,2420 de plus pour les superviseurs que pour les non-superviseurs. 
+Interprétons ces coefficients. 
 
-L’AIC de ce modèle est de 347,35, ce qui est plus grand que 292,31, le AIC du modèle précédent. Le premier est donc meilleur et il vaut mieux considérer la variable nombre.
+- L’intercept de 28.5104 indique l’ordonnée à l’origine soit le salaire mooyen de l’employé s’il a comme dernier diplôme un baccalauréat, aucune année d'expérience et ne supervise personne.
+- Les coefficients associés au diplôme indiquent que pour une même expérience et un même nombre de personnes supervisées, une personne avec une maîtrise reçoit en moyenne 13.8165 de plus en salaire qu’une personne avec un baccalauréat, et un doctorat apporte en moyenne 27.8193 de plus qu’un baccalauréat seul. 
+- Le coefficient pour l’expérience signifie que pour chaque année de plus d’expérience, en moyenne un employé a un salaire qui augmente de 1.2878. 
+- Le coefficient pour la supervision indique qu’un superviseur reçoit en moyenne 0.7207 de moins qu’un non-superviseur. 
+- Pour le coefficient d’interaction entre l'expérience et le nombre d’employés supervisés, nous apprenons que le nombre d’années d’expérience apporte en moyenne 1.2420 de plus de salaire pour les superviseurs que pour les non-superviseurs. 
+
+
+Puisque les deux modèles ne sont pas emboîtés, nous utilisons l'AIC comme critère de sélection du meilleur modèle.L’AIC de ce second modèle est de 347.35, ce qui est plus grand que 292.31, le AIC du modèle précédent. Le premier modèle est donc meilleur et il vaut mieux considérer la variable *nombre* plutôt que la variable *supervision*.
+
+```{r}
+extractAIC(best_modele)[2] #AIC meilleur modèle en c)
+extractAIC(best_modele_supervision)[2] #AIC meilleur modèle en d)
+```
 
 ### 1e
 
@@ -189,18 +364,18 @@ Représentons visuellement les résidus standardisés et les leviers de plusieur
 
 Nous avons d’abord calculé les résidus standardisés du meilleur modèle, puis avons créé les graphiques de ces résidus en fonction de chacune des variables explicatives. 
 
-Pour les variables experience et nombre, nous avons simplement placé des points, mais pour la variable diplome, puisqu’elle n’est pas continue, nous avons choisi de faire un diagramme en boîte pour mieux visualiser les résidus.
+Pour les variables *experience* et *nombre*, nous avons simplement placé des points, mais pour la variable diplome, puisqu’elle n’est pas continue, nous avons choisi de faire un diagramme en boîte pour mieux visualiser les résidus.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 residus_stand <- rstandard(best_modele)
 residus_studen <- rstudent(best_modele)
-scatter.smooth(residus_stand ~ Salary$experience, xlab = "Expérience", ylab = "Résidus standardisés", main = "Graphique 1: Résidus standardisés en fonction de l'expérience")
+scatter.smooth(residus_stand ~ Salary$experience, xlab = "Expérience", ylab = "Résidus standardisés", main = "Graphique 1: Résidus standardisés \n en fonction de l'expérience")
 boxplot(residus_stand ~ factor(Salary$diplome),
         xlab = "Diplôme",
         ylab = "Résidus standardisés",
-        main = "Graphique 2 : Résidus standardisés en fonction du diplôme")
+        main = "Graphique 2 : Résidus standardisés\n en fonction du diplôme")
 
-scatter.smooth(residus_stand ~ Salary$nombre, xlab = "Nombre d'employés supervisés", ylab = "Résidus standardisés", main = "Graphique 3: Résidus standardisés en fonction du nombre d'employés supervisés")
+scatter.smooth(residus_stand ~ Salary$nombre, xlab = "Nombre d'employés supervisés", ylab = "Résidus standardisés", main = "Graphique 3: Résidus standardisés \n en fonction du nombre d'employés supervisés")
 ```
 
 Nous avons également tracé les résidus en fonction de la variable réponse.
@@ -209,16 +384,16 @@ Nous avons également tracé les résidus en fonction de la variable réponse.
 scatter.smooth(residus_stand ~ Salary$salaire, xlab = "Salaire", ylab = "Résidus standardisés", main = "Graphique 4: Résidus standardisés en fonction du salaire")
 ```
 
-Ensuite, il se trouve les résidus standardisés en fonction du numéro d’observation.
+Ensuite, on trace les résidus standardisés en fonction du numéro d’observation.
 
 ```{r, echo=FALSE}
-scatter.smooth(residus_stand ~ 2:66, xlab = "Numéro d'observation", ylab = "Résidus standardisés", main = "Graphique 5: Résidus standardisés en fonction du numéro d'observation")
+scatter.smooth(residus_stand ~ 2:66, xlab = "Numéro d'observation", ylab = "Résidus standardisés", main = "Graphique 5: Résidus standardisés\n en fonction du numéro d'observation")
 ```
 
 Nous présentons également les résidus en fonction du résidu précédent.
 
 ```{r, echo=FALSE}
-scatter.smooth(residus_stand[2:65] ~ residus_stand[1:64], xlab = "Résidus précédents", ylab = "Résidus standardisés", main = "Graphique 6: Résidus standardisés en fonction des résidus précédents")
+scatter.smooth(residus_stand[2:65] ~ residus_stand[1:64], xlab = "Résidus précédents", ylab = "Résidus standardisés", main = "Graphique 6: Résidus standardisés \nen fonction des résidus précédents")
 ```
 
 Nous présentons par la suite l’histogramme des résidus et le diagramme quantile-quantile.
@@ -244,21 +419,25 @@ scatter.smooth(leviers ~ 2:66, xlab = "Numéro d'observation", ylab = "Leviers",
 
 Validons les hypothèses du modèle retenu à l’aide des graphiques des résidus présentés dans la section e. Ceci nous permettra de déterminer s’il est nécessaire de transformer la variable réponse. 
 
-**Linéarité :** La linéarité du modèle retenu peut être observée dans les graphiques 1, 2 et 3, qui présentent les résidus standardisés en fonction de chacune des variables explicatives.  Pour que la linéarité soit respectée, les résidus doivent varier constamment autour de 0 sans avoir de tendance. Le graphique 1 et 2 sont assez linéaires. Les points s’éloignent de l’axe des 0, mais sans suivre une tendance, simplement lorsque les valeurs augmentent. Le graphique 3 cependant s’éloigne de 0 vers les valeurs positives. Il pourrait peut-être y avoir un manque de linéarité. 
+**Linéarité :** La linéarité du modèle retenu peut être observée dans les graphiques 1, 2 et 3, qui présentent les résidus standardisés en fonction de chacune des variables explicatives.  Pour que la linéarité soit respectée, les résidus doivent varier constamment autour de 0 sans avoir de tendance. Le graphique 1 et 2 sont assez linéaires. Les points s’éloignent de l’axe des 0, mais sans suivre une tendance, simplement lorsque les valeurs augmentent. Cependant dans le graphique 3, les valeurs des résidus s’éloignent de 0 pour les valeurs non nulles du nombre d'employés supervisés. Il pourrait peut-être y avoir un manque de linéarité. 
 
 **Variance constante :** Nous vérifions la variance constante à l’aide du graphique 4, qui présente les résidus standardisés en fonction de la variable réponse. Pour que la variance constante soit respectée, les points doivent varier autour de 0 sans tendance. Dans le graphique 4 nous n’avons pas une variance constante car il y a une déviation très grande surtout à partir d'un salaire de 80, où les résidus deviennent de plus en plus positifs. 
 
-**Indépendance des observations :** Observons l’indépendance des observations à l’aide des graphiques 5 et 6. Nous y présentons les résidus standardisés en fonction du nombre d'observations, et en fonction des résidus précédents. Encore une fois, nous ne devrions pas y trouver de tendance puisque nous cherchons à ce que les observations soient séparées et ne s’influencent pas. Pour graphique 5, la courbe est très droite sur l’axe des 0. Le graphique 6 ne semble pas non plus y présenter de tendance, mis à part une valeur légèrement plus élevée au début. N’y trouvant pas de tendance, il semble y avoir des observations indépendantes. 
+**Indépendance des observations :** Observons l’indépendance des observations à l’aide des graphiques 5 et 6. Nous y présentons les résidus standardisés en fonction du nombre d'observations, et en fonction des résidus précédents. Encore une fois, nous ne devrions pas y trouver de tendance puisque nous cherchons à ce que les observations soient séparées et ne s’influencent pas. Pour le graphique 5, la courbe est très droite sur l’axe des 0. Le graphique 6 ne semble pas non plus  présenter de tendance, mis à part une valeur légèrement plus élevée au début. N’y trouvant pas de tendance, il semble les observations semblent indépendantes. 
 
-**Normalité des observations :** La normalité des observations est maintenant étudiée à l’aide des graphiques 7 et 8, où nous avons l’histogramme des résidus et le diagramme quantile-quantile. Nous avons tracé les deux courbes sur les deux graphiques que les données devraient suivre. L’histogramme devrait suivre une distribution normale, mais nous voyons qu’elle ne respecte pas tout à fait ce critère. Pour le diagramme quantile-quantile, puisque les résidus sont de forme convexe d'un bord et concave de l'autre, nous trouvons une distribution avec des queues significativement plus épaisses qu'une loi normale standard. 
+**Normalité des observations :** La normalité des observations est maintenant étudiée à l’aide des graphiques 7 et 8, où nous avons l’histogramme des résidus et le diagramme quantile-quantile. Sur le graphique 7, nous avons tracé la courbe de densité d'une loi normale standard. L’histogramme devrait suivre une distribution normale, mais nous voyons qu’elle ne respecte pas tout à fait ce critère. Pour le diagramme quantile-quantile, puisque les résidus sont de forme convexe d'un bord et concave de l'autre, nous trouvons une distribution avec des queues significativement plus épaisses qu'une loi normale standard. 
 
-La linéarité et l’indépendance des observations sont respectées, mais la variance n’est pas constante et les observations ne suivent pas une distribution normale. Il serait ainsi une bonne idée d’effectuer une transformation de la variable réponse, peut-être avec une transformation logarithmique.
+La linéarité et l’indépendance des observations sont respectées, mais la variance n’est pas constante et les observations ne suivent pas une distribution normale. Il est probablement nécessaire d’effectuer une transformation de la variable réponse (peut-être avec une transformation logarithmique).
 
 ### 1g
 
-Cherchons maintenant s’il y a des observations influentes ou aberrantes. Les observations influentes peuvent être observées à l’aide des graphiques des leviers car une observation influente possède un levier important. En regardant les graphiques 9 et 10, qui présentent les leviers en fonction de la variable réponse et en fonction du numéro d’observation, nous pouvons suspecter la présence d’observations influentes : plusieurs valeurs de levier sont plus élevées que d’autres. Vérifions maintenant avec des calculs. 
+Cherchons maintenant s’il y a des observations influentes ou aberrantes.
 
-Nous avons effectué plusieurs tests pour trouver les indices des observations potentiellement influentes. Les observations avec un levier supérieur à 3(p+1)/n sont les observations 3, 14, 37 et 43. Avec la distance de Cook, nous trouvons l’observation 43. En calculant le DFFITS, nous trouvons 3, 19, 23, 43 et 55. Avec le DFBETA, nous avons 3, 11, 19, 32, 43 et 55. Enfin, nous avons utilisé le ratio de covariance pour avoir les observations 3, 14, 19, 23, 26, 37, 43 et 55. En prenant les observations en commun du DFFITS, DFBETA et du ratio de covariance, nous concluons que les observations qui semblent être influentes sont les 3, 19, 43 et 55. 
+#### Observations influentes
+Les observations influentes peuvent être observées à l’aide des graphiques des leviers car une observation influente possède un levier important. En regardant les graphiques 9 et 10, qui présentent les leviers en fonction de la variable réponse et en fonction du numéro d’observation, nous pouvons suspecter la présence d’observations influentes : plusieurs valeurs de levier sont plus élevées que d’autres. Vérifions maintenant avec des calculs. 
+
+Nous avons effectué plusieurs tests pour trouver les indices des observations potentiellement influentes ou aberrantes. Les observations avec un levier supérieur à 3(p+1)/n sont les observations 3, 14, 37 et 43. Avec la distance de Cook, nous déterminons que l’observation 43 est influente. 
+En calculant le DFFITS, nous trouvons 3, 19, 23, 43 et 55 comme observations influentes. Avec le DFBETA, nous avons 3, 11, 19, 32, 43 et 55. Enfin, les observations 3, 14, 19, 23, 26, 37, 43 et 55 sont influentes selon le rapport de covariance. En prenant les observations en commun du DFFITS, DFBETA et du ratio de covariance, nous concluons que les observations qui semblent être influentes sont : 3, 19, 43 et 55. 
 
 Nous avons vérifié cette hypothèse en enlevant ces valeurs de notre modèle et en comparant les coefficients obtenus.
 
@@ -276,17 +455,613 @@ data.frame(coef.avec=coef(best_modele), coef.sans=coef(best_modele_sans_influ))
 data.frame(s.e.avec=sqrt(diag(vcov(best_modele))), s.e.sans=sqrt(diag(vcov(best_modele_sans_influ))))
 ```
 
-Nous y voyons ainsi des valeurs pas trop différentes, mais puisque nous en avons seulement retirées quatre, les coefficients er écart type sont plutôt changées, ce qui suggère effectivement la présence d’observations influentes. 
+Étant donné que nous en avons seulement retiré quatre observations et que les coefficients et écart-type ont relativement changé, cela suggère que ces observations sont effectivement influentes. 
 
-Enfin, nous avons que les observations avec des résidus standardisés avec valeur absolue supérieure à 3 peut indiquer qu’il s’agit d’une valeur aberrante. Nous avons cherché quelles observations correspondent à ce critère, et il n’y en avait aucune. Nous avons également comparé les distributions des résidus standardisés et studentisés.
+
+#### Observations aberrantes
+Enfin, des valeurs de résidus standardisés supérieures à 3 en valeur absolue peuvent indiquer qu’il s’agit d’observations aberrantes. Nous avons cherché quelles observations correspondent à ce critère, et il n’y en avait aucune. Nous avons également comparé les distributions des résidus standardisés et studentisés.
 
 ```{r, echo=FALSE}
 summary(cbind(residus_stand,residus_studen))
+
 ```
 
-Puisque qu’elles ne sont pas trop différentes (différence au centième ou millième), nous concluons qu’il n'y a pas de valeurs aberrantes dans nos données.
+Puisque que les deux distributions ne sont pas trop différentes (différence au centième ou millième), nous concluons qu’il n'y a pas de valeurs aberrantes dans nos données.
 
 ## Question 2
+
+### a) Statistiques descriptives du jeu de données avec des graphiques
+
+Le jeu de données à l'étude pour la question 2 contient 30 observations de 03 variables numériques qui sont : *Age*, *Birth* et *DS*.
+
+- La variable *Age* prend des valeurs entre 17 et 47.10. L'âge moyen est de 32 ans. L'histogramme de cette variable indique qu'en général, les valeurs sont prises uniformément dans cet intervalle. Il n'y a pas de groupes d'âge sous-représentés ou surreprésentés dans le jeu de données.
+
+- La variable *Births* prend des valeurs entre 249 et 24 807. Elle représente le nombre de naissances par groupe d'âge des mères. Le nombre de naissance moyen est 11 829.
+    
+
+- La variable *DS* prend des valeurs entre 7 et 33. Il s'agit du nombre de naissances avec le syndrôme de Down.Cette valeur est relativement faible par rapport au nombre de naissances.
+
+```{r question_a_part1, echo=FALSE}
+
+data("downs") ## rendre le jeu de données disponible
+
+##Statistiques descriptives
+summary(downs)
+
+##Graphiques univariés
+
+#variable Age
+x <- ggplot(downs, aes(x = Age)) +
+            geom_histogram(color = "black", fill = "#56B4E9", bins = 30) + 
+            labs(x = "Age", y = "Frequence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Histogramme de Age")
+            
+             
+x
+
+# x <- ggplot(downs, aes(y = Age)) +
+#             geom_boxplot() +
+#             theme_bw() +
+#             theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+#             ggtitle("Boxplot de Age")
+#             
+#              
+# x
+
+#Variable Birth
+
+x <- ggplot(downs, aes(x = Births)) +
+            geom_histogram(color = "black", fill = "#56B4E9", bins = 30) +
+            labs(x = "Births", y = "Fréquence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Histogramme de Births")
+            
+             
+x
+
+# x <- ggplot(downs, aes(y = Births)) +
+#             geom_boxplot() +
+#             theme_bw() +
+#             theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+#             ggtitle("Boxplot de Births")
+#             
+#              
+# x
+
+#Variable DS
+
+x <- ggplot(downs, aes(x = DS)) +
+            geom_histogram(color = "black", fill = "#56B4E9",bins = 30) +
+            labs(x = "DS", y = "Fréquence") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Histogramme de DS")
+            
+             
+x
+```
+
+Le graphique du nombre de naissances en fonction de l'âge moyen des groupes montre que le nombre de naissances augmente avec l'âge jusqu'à environ 24 ans puis diminue progressivement à mesure que l'âge augmente. Ce qui est un résultat attendu.
+
+```{r question_a_part2, echo=FALSE}
+#Graphiques bivariés
+x <- ggplot(downs, aes(x = Age, y =  Births)) +
+            geom_point()+
+            labs(x = "Age", y = "Births") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Le nombre de naissances en fonction de l'âge moyen")
+            
+             
+x
+```
+
+La matrice de corrélation entre les variables indique une forte corrélation linéaire négative entre les variables *Age* et *Births*. Ce qui confirme l'interprétation faite un peu plus haut dans l'analyse : plus les mères sont âgées, moins il y'a de naissances.
+Cependant, il y a une faible corrélation entre la variable *DS* et les variables *Births* et *Age*. Cela pourrait s'expliquer par le fait qu'on ne tient pas compte de la taille des groupes. La section suivante nous aide à mieux comprendre la relation entre ces variables.
+
+```{r question_a_part4, echo=FALSE}
+cor(downs)
+```
+
+Le nuage de points de la variable *DS* en fonction de la variable *Age* ne nous permet pas de tirer des conclusions pertinentes sur la relation entre ces deux variables à cause de la différence du nombre de naissances (*Births*) par groupe d'âge.
+Nous avons donc tracé un nuage de points du pourcentage de naissances avec le syndrôme de Down (*DS/Births (%)*) en fonction de la variable *Age*.
+Ce graphique permet d'observer que le pourcentage de naissances avec le syndrôme
+de Down est relativement stable et faible pour les groupes de mères agées de 
+moins de 35 ans.
+Ce pourcentage augmente progresssivement à partir de 35 ans.
+Il semble diminuer à partir de 45 ans selon ce qu'on observe sur le graphique.
+
+```{r question_a_part3, echo=FALSE}
+
+#Graphiques bivariés
+
+x <- ggplot(downs, aes(x = Age, y =  DS)) +
+            geom_point()+
+            labs(x = "Age", y = "DS") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("DS en fonction de l'âge moyen")
+            
+             
+x
+
+x <- ggplot(downs, aes(x = Age, y =  (DS/Births))) +
+            geom_point()+
+            scale_y_continuous(labels = scales::percent) +
+            labs(x = "Age", y = "DS/Births (%)") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Pourcentage de DS en fonction de l'âge moyen")
+            
+             
+x
+
+
+
+
+#which.max(downs$DS/downs$Births)
+```
+
+
+
+
+### b) Définir clairement la variable réponse. Quelle est la distribution exacte de cette variable et quelle est la distribution la mieux adaptée à ce problème
+
+La variable réponse pour cette étude est $Y_i$ = $DS_i$.
+Cette variable suit une binomiale de paramètres : $\pi_i$ = (la probabilité de naître avec le syndrôme de Down sachant l'âge moyen du groupe de mères $Age_i$), 
+et $m_i$ = `r colnames(downs)[2]` le nombre de naissances dans le groupe d'âge concerné.
+Cependant avec ce jeu de données, la plus grande probabilité de naître avec le syndrome de Down est $pi_{28}$ = `r (downs$DS/downs$Births)[28]`.
+
+Ces probabilités étant faibles, la distribution la mieux adaptée à ce problème 
+est la distribution poisson.
+La variable réponse est toujours $Y_i$ = $DS_i$.
+Cette variable suit une loi de poisson de paramètre $\mu_i$ qui vérifie $log(\frac{\mu_i}{m_i}) = \eta_i$.
+La variable $m_i$ = `r colnames(downs)[2]` devient une variable explicative *offset* du modèle.
+
+### c) On veut considérer un modèle avec une composante systématique qui s'exprime en fonction de l'âge moyen à l'aide d'un polynôme. Utiliser successivement des statistiques de test Wald et des critères AIC pour déterminer le degré du polynôme le plus adapté à ces données.
+
+Pour répondre à cette question nous procédons à l'ajustement de 03 modèles .
+
+-   Le modèle 1 qui a comme variable explicative l'*Age*.
+    $log(\mu_i) = log(Births) + \beta_o + \beta_1 * Age$
+
+-   Le modèle 2 qui a comme variables explicatives l'*Age* et son terme quadratique.
+    $log(\mu_i) = log(Births) + \beta_o + \beta_1*Age + \beta_2*Age^2$
+
+-   Le modèle 3 qui a comme variable explicative l'*Age* et ses termes quadratique
+et cubique.
+    $log(\mu_i) = log(Births) + \beta_o + \beta_1*Age + \beta_2*Age^2 + \beta_3*Age^3$
+
+Nous utilisons le test de Wald, le test de la différence de déviance pour les modèles emboîtés et le critère AIC pour choisir le degré du polynôme le plus 
+adpaté pour ces données.
+
+#### Test de Wald
+
+Le test que l'on effectue est le suivant : $H_0$ : $\beta_i = 0$,  $H_1$ : $\beta_i \ne 0$
+
+La statistique de test est la suivante : $t_{obs} = \frac {\hat\beta_i}{var(\hat\beta_i)}$.
+Sous $H_0$, cette statistique suit une loi normale standard.
+On rejette l'hypothèse $H_0$ si le seuil observé du test est inférieur au seuil 
+de signification $\alpha$ choisi.
+En considérant un seuil $\alpha = 0.05$, on obtient les résultats suivants à 
+partir de la sortie R :
+
+-   Modèle 1 : Le seuil observé pour le test sur le coefficient $\beta_1$ est proche de 0.
+    Au seuil de signification $\alpha$ la variable *Age* est donc statistiquement significative selon le test de Wald.
+
+-   Modèle 2 : Les seuils observés pour les tests sur les coefficients $\beta_1$
+et $\beta_2$ sont proches de 0.
+    Au seuil de signification $\alpha$ la variable *Age* ainsi que son terme quadratique sont donc statistiquement significatifs selon le test de Wald.
+
+-   Modèle 3 : Les seuils observés pour les tests sur les coefficients $\beta_1$
+et $\beta_2$ sont inférieurs à 0.05.
+    Au seuil de signification $\alpha$ la variable *Age* ainsi que son terme quadratique sont donc statistiquement significatifs selon le test de Wald.
+    Cependant le seuil observé pour le test associé au coefficient $\beta_3$ est 0.06922.
+    Le terme cubique de la variable *Age* n'est donc pas statistiquement significatif au seuil de signification $\alpha$ selon le test de Wald.
+
+```{r question_c1}
+## Réponse à la question
+
+modele_poly_raw_1 <- glm(DS~offset(log(Births))+Age, family = poisson,
+                         data = downs)
+modele_poly_raw_2 <- glm(DS~offset(log(Births))+Age + I(Age^2),
+                         family = poisson, data = downs)
+modele_poly_raw_3 <- glm(DS~offset(log(Births))+Age + I(Age^2)+I(Age^3),
+                         family = poisson, data = downs)
+
+##Seuil alpha pour les tests d'hypothèses : 5%
+#Test de Wald
+summary(modele_poly_raw_1) 
+summary(modele_poly_raw_2) 
+summary(modele_poly_raw_3) 
+
+```
+
+Selon le test de Wald, le meilleur modèle est le modèle 2.
+
+#### Le test de la différence de deviance pour les modèles emboîtés
+
+On peut effectuer ce test puisque le modèle 1 est emboîté dans le modèle 2 qui est aussi emboîté dans le modèle 3.
+Pour effectuer ce test, on calcule la deviance de chaque modèle, disons $D_{red}$ et $D_{comp}$.
+La statistique de test pour comparer les deux modèles est $Q_D = D_{red} - D_{comp}$.
+Sous $H_0$ : le modèle réduit est plus adéquat aux données : on a $Q_D$ suit une loi de Khi-deux à d degres de liberté, où d est la différence entre le nombre de paramètres du modèle complet et celui du modèle réduit.
+On rejette $H_0$ au seuil $\alpha$ si $Q_D > \chi^2_{d,1-\alpha}$ et le seuil observé de ce test est $P(\chi_d^2 > Q_D)$.
+Ce test est directement effectué avec la fonction *anova* de R.
+Comme pour le test de Wald, le seuil de siginfication choisi est $\alpha = 0.05$.
+
+Le seuil observé du test pour comparer les modèles 1 et 2 est proche de 0.
+On rejette $H_0$ au seuil de signification $\alpha$ : le modèle 2 est plus adéquat pour les données.
+Le seuil observé du test pour comparer les modèles 2 et 3 est 0.06837.
+On ne rejette pas $H_0$ au seuil de signification $\alpha$.
+Le modèle 2 est plus adéquat aux données selon ce test.
+
+```{r question_c2 Test du rapport de vraisemblance}
+##Test du rapport de vraisemblance
+anova(modele_poly_raw_1,modele_poly_raw_2) 
+anova(modele_poly_raw_2,modele_poly_raw_3)
+```
+
+#### AIC
+
+Nous procédons au calcul et à la comparaison de l'AIC pour ces trois modèles.
+Selon le critère de l'AIC, le modèle 3 est le meilleur car il est celui ayant le plus petit AIC.
+
+```{r question_c3 AIC}
+##AIC
+AIC <- rbind(Modele_1 = extractAIC(modele_poly_raw_1),
+             Modele_2 = extractAIC(modele_poly_raw_2),
+             Modele_3 = extractAIC(modele_poly_raw_3))
+colnames(AIC) <- c("p + 1", "AIC")
+AIC
+
+```
+
+#### Choix du modèle final
+
+Le modèle final choisi est le modèle 2 puisque toutes les variables y sont significatives selon le test de Wald.
+De plus il s'agit du meilleur modèle selon le test de la déviance pour modèles emboîtés.
+Bien que l'AIC de ce modèle soit plus grand que celui du modèle 3, les valeurs sont proches pour ces deux modèles.
+Le polynôme de degré 2 pour la variable *Age* s’avère donc être le plus adapté à ces données.
+
+### d) Interpréter le modèle obtenu retenu au (c). Représenter graphiquement les valeurs prédites par le modèle en fonction de l'âge. Interpréter la figure obtenue et la comparer aux graphiques produits au (a). Est-ce qu'il y a un âge où le risque d'avoir une naissance avec le syndrome de Down est minimal ? maximal ?
+
+La variable réponse est $Y_i$ = $DS_i$.
+Cette variable suit une loi de poisson de moyenne $\mu_i$.
+Selon le modèle retenu à la question précédente on a : $log(\mu_i) = log(Births)- 2.3425778 - 0.4071225*Age + 0.0084991*Age^2$.
+
+Selon ce modèle, la variable *Age* a deux impacts sur le modèle :
+
+-   effet simple de la variable *Age* avec $\hat\beta_1$: le nombre moyen de naissances avec le syndrôme de Down diminue lorsque l'âge des mères augmente.
+
+-   effet quadratique de la variable *Age* avec $\hat\beta_2$: à mesure que l'âge de la mère augmente, le nombre moyen de naissances avec le syndrôme de Down diminue jusqu'à une certaine valeur (cette valeur correspond à l'âge où le risque d'avoir une naissance avec le syndrôme de Down est minimal) puis augmente par la suite.
+
+```{r question_d1.1}
+## d.1.1)Interpréter le modèle obtenu retenu au (c)
+modele_final <- glm(DS~offset(log(Births)) + Age + I(Age^2),family = poisson, 
+                    data = downs)
+summary(modele_final)
+```
+
+Pour déterminer s'il y'a un âge où le risque d'avoir une naissance avec le syndrôme de Down est minimal ou maximal, on cherche d'abord la valeur de l'âge qui annule la dérivée première de la fonction $log(\mu_i)$ par rapport à la variable Age qui est : $- 0.4071225 + 2 * 0.0084991*Age$.
+L'âge que l'on trouve est : $23.95 \approx 24 \ ans$.
+Puisque la dérivée seconde de la fonction $log(\mu_i)$ par rapport à la variable Age est positive, il s'agit d'un minimum.
+Ainsi, le risque d'avoir le syndrôme de Down est minimal lorsque l'âge de la mère est approximativement de 24 ans.
+
+```{r question_d1.2}
+## Pour avoir les âges min ou max on dérive la composante systémique 
+## et on calcule l' âge x pour lequel la dérivée s'annule. 
+f <- function(x){modele_final$coefficients[2] + 2*modele_final$coefficients[3]*(x)}
+
+age_DS_max_ou_min <- rootSolve::uniroot.all(f, c(17, 60))
+
+## L'âge est maximal si la dérivée seconde est négative et minimal 
+##si la dérivée seconde est positive.
+f_2 <- unname(2*modele_final$coefficients[3])
+rbind("Age min ou max"  = age_DS_max_ou_min ,"Dérivée seconde" = f_2)
+```
+
+Étant donné la différence dans le nombre de naissances total par groupe d'âge des mères, l'interprétation du graphique présentant le pourcentage estimé du nombre de naissances avec le syndrôme de Down nous parait plus appropriée.
+L'analyse de ce graphique nous permet de remarquer que le pourcentage de naissances avec le syndrôme de Down est très faible et stable lorsque les mères sont agées d'environ 31 ans ou moins.
+Cette proportion augmente progressivement avec l'âge des mères à partir de 32 ans environ.
+On observe une tendance à peu près similaire dans le graphique produit en a).
+Les différences notables sont que dans le graphique produit en a) le pourcentage du nombre de naissances avec le syndrôme de Down commence à augmenter autour de 35 ans et il semble baisser à partir de 45 ans.
+
+```{r question_d2, echo=FALSE}
+##d.2) Représenter graphiquement les valeurs prédites par le modèle en fonction 
+##de l'âge.
+
+predictions <- fitted(modele_final)
+
+x <- ggplot(data.frame(x = downs$Age, y = predictions), aes(x = x, y =  y)) +
+            geom_point()+
+            labs(x = "Age", y = "DS estimé") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("DS estimé en fonction de l'âge")
+            
+             
+x
+x <- ggplot(data.frame(x = downs$Age, y = predictions/downs$Births), aes(x = x, y =  y)) +
+            geom_point()+
+            scale_y_continuous(labels = scales::percent) +
+            labs(x = "Age", y = "Pourcentage de DS estimé (%)") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Pourcentage DS estimé en fonction de l'âge")
+            
+             
+x
+
+
+```
+
+### e) Procéder à la validation du modèle retenu au (c): est-ce qu'il y a une extra-variabilité? est-ce qu'il y a des observations influentes ou aberrantes ?
+
+
+```{r question_e_part1, include=FALSE}
+## Statistiques d'ajustement - si le modèle poisson est bien adapté aux données, ces deux statistiques suivent une loi chi-carré à 30-2-1 = 27 degrés de liberté
+n <- nrow(downs)
+p <- 2
+X2 <- sum((predictions-downs$DS)^2/(predictions))
+D <- deviance(modele_final)
+
+p_value <- 1-pchisq(c(X2,D), df = n-p-1) ## les valeurs des seuils observés pour ces deux statistiques sont inférieures à 5%: le modèle retenu ne semble pas approprié pour les données.
+
+cbind("pvalue X2" = p_value[1], "pvalue D" = p_value[2])
+
+##Vérification de l'extra-variabilité
+# phi.pearson
+phi.pearson <- X2/(n-p-1) ## L'estimateur de Pearson de phi est largement différent de 1. Il y'a donc possiblement présence d'extra-variabilité.
+cat(paste0("phi.pearson  = ", phi.pearson))
+
+```
+
+On vérifie l'adéquation du modèle à l'aide des deux statistiques suivantes : $X^2 = \sum_{i = 1}^{n} \frac {(y_i - \hat\mu_i)^2}{\hat\mu_i}$ et $D = \sum_{i = 1}^{n} d(y_i, \hat\mu_i)$.
+Ces deux statistiques suivent approximativement une loi de Khi-deux à $n - p + 1 = 27$ degrés de liberté si le modèle de poisson est bien adapté aux données.
+
+Les seuils observés pour ces deux statistiques d'ajustement sont respectivement `r p_value[1]` et `r p_value[2]`.
+Au seuil de signification $\alpha = 0.05$, le modèle retenu ne semble pas approprié pour les données.
+Pourtant, les graphiques des résidus de déviance et de Pearson semblent satisfaisants (la majorité des résidus est entre -2 et 2 et les graphiques ne présentent aucune tendance particulière).
+Cependant, le graphique des valeurs prédites de DS en fonction des valeurs réelles suggère un mauvais ajustement. À notre avis, ce faible ajustement est normal du fait de la petite taille de l'échantillon (30 observations). Cependant, le modèle permet de capturer la relation entre les variables *Age* et *Ds*. 
+
+Par ailleurs, l'estimateur de Pearson de phi est largement différent de 1 (`r phi.pearson`). Il y'a donc possiblement présence d'extra-variabilité.
+
+```{r question_e_part2, echo=FALSE}
+
+# Graphiques
+
+res_deviance <- resid(modele_final)
+res_pearson <- resid(modele_final, type = "pearson")
+
+
+x <- ggplot(data.frame(x = 1:30, y = res_pearson), aes(x = x, y =  y)) +
+            geom_point() +
+            ylim(c(-4,4)) +
+            geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+            geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+            labs(x = "Numéro d'observation", y = "Résidus Pearson") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Résidus Pearson")
+            
+             
+x
+
+x <- ggplot(data.frame(x = 1:30, y = res_deviance), aes(x = x, y =  y)) +
+            geom_point()+
+            ylim(c(-4,4)) +
+            geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+            geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+            labs(x = "Numéro d'observation", y = "Résidus déviance") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Résidus déviance")
+            
+             
+x
+
+x <- ggplot(data.frame(x = downs$DS, y = predictions), aes(x = x, y =  y)) +
+            geom_point() +
+            xlim(c(10,40)) +
+            ylim(c(10,40)) +
+            geom_abline(intercept = 0, slope = 1) +
+            labs(x = "DS - valeur réelle", y = "DS - valeur prédite") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Valeurs de DS réelles vs prédites")
+            
+             
+x
+
+
+```
+
+
+
+```{r question_e_part3, echo  = TRUE}
+## Calcul des leviers et des residus 
+h <- hatvalues(modele_final)
+#sum(h)
+
+# Résidus de deviance standardisés est studentisés
+res_D <- cbind("r'D"= rstandard(modele_final), "r''D"= rstudent(modele_final))
+
+## Détection des observations aberrantes
+(indices_resD <- apply(abs(res_D), 2, function(x){which(abs(x)>=3)}) )
+
+## Detection des observations influentes
+
+(indices_h <- which(h>(3*(p+1)/n))) 
+
+d1 <- cooks.distance(modele_final)
+#max(d1) ## a comparer avec 1 et avec qf(0.5,p+1,n-(p+1))
+#qf(0.5,p+1,n-(p+1))
+(indice_cook <- which(d1>qf(0.5,p+1,n-(p+1)))) 
+
+d2 <- dffits(modele_final) 
+#max(abs(d2)) ## a comparer avec 3p/n
+#3*p/n
+(indices_dffits <- which(as.vector(abs(d1))>3*p/n))
+
+d3 <- dfbetas(modele_final)
+#max(abs(d3)) ## a comparer avec 3/racine.carre(n)
+#3/sqrt(n)
+d3.matrice <- abs(d3)>3/sqrt(n)
+(indices_dfbetas <- which(as.vector(rowSums(d3.matrice))>0)) 
+
+d4 <- covratio(modele_final)
+#max(abs(1-d4)) ## a comparer avec 3p/n
+#3*p/n
+(indices_covratio <- which(as.vector(abs(1-d4))>3*p/n))
+
+intersect(indices_dfbetas,indices_covratio)
+intersect(intersect(indices_dffits,indices_dfbetas),indices_covratio) 
+
+```
+
+L'observation 30 semble être aberrante.
+En effet, cette observation a des résidus de déviance standardisés et studentisés supérieurs à 3 en valeur absolu (`r abs(res_D[indices_resD[1],])`).
+Cette observation a un levier important et est déclarée influente selon les critères : distance de Cook, DFFITS, DFBETAS et le rapport de covariance.
+Les observations 1, 2, 3, 5, 7, 11, 26, 27 et 29 ont été déclarées influentes selon le rapport de covariance mais pas selon les autres critères.
+
+#### Gestion de la variabilité extra-poissonière : modèle avec la loi binomiale négative
+
+L'ajustement d'un modèle avec la loi binimiale négative est une stratégie qui permet de rémédier au problème de l'extra-variabilité.
+C'est ce que nous effectuons dans cette section.
+
+Les paramètres de ce modèle sont $\alpha$ et $\beta$ et on retrouve la régresssion poisson lorsque $\alpha \to 0$.
+Un avantage intéressant pour ce modèle est qu'il nous permet de tester l'hypothèse nulle $H_0$ : $\alpha = 0$.
+À cet effet, on ajuste le modèle poisson et le modèle avec une loi binomiale négative et on calcule les déviances des deux modèles, disons $D_0$ et $D_1$.
+La statistique du test sera alors $Q_{obs}  = D_0 - D_1$.
+Sous l'hypothèse nulle $H_0$ : on a $Q \sim \frac{1}{2}\chi^2_0 + \frac{1}{2}\chi^2_1$ car on teste sur la limite de son domaine de définition.
+Le seuil observé est égal à $P(\chi^2_1 > Q_{obs})/2$.
+
+```{r modèle avec la loi binomiale négative, echo=TRUE}
+
+modele_NB <- glm.nb(DS~offset(log(Births)) + Age + I(Age^2),link  ="log", data = downs)
+summary(modele_NB)
+Q_obs <- deviance(modele_final)-deviance(modele_NB)
+pvalue <- (1-pchisq(Q_obs,df=1))/2
+pvalue
+
+```
+
+À la suite de l'ajustement du modèle, On rejette l'hypothèse nulle $H_0$ car le seuil observé est proche de 0. Il y'a présence de variabilité extra-poissonière dans les données et l'ajustement du modèle avec la loi binomiale négative semble plus approprié pour ces données.
+
+```{r modèle avec la loi binomiale négative 2, echo=FALSE}
+
+x <- ggplot(data.frame(x = downs$Age, y = fitted(modele_NB)/downs$Births), aes(x = x, y =  y)) +
+            geom_point()+
+            scale_y_continuous(labels = scales::percent) +
+            labs(x = "Age", y = "Pourcentage de DS estimé (%)") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Pourcentage DS estimé en fonction de l'âge")
+            
+             
+x
+
+
+x <- ggplot(data.frame(x = downs$DS, y = fitted(modele_NB)), aes(x = x, y =  y)) +
+            geom_point() +
+            xlim(c(10,40)) +
+            ylim(c(10,40)) +
+            geom_abline(intercept = 0, slope = 1) +
+            labs(x = "DS - valeur réelle", y = "DS - valeur prédite") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Valeurs de DS réelles vs prédites")
+            
+             
+x
+
+res_deviance_NB <- resid(modele_NB)
+res_pearson_NB <- resid(modele_NB, type = "pearson")
+
+
+x <- ggplot(data.frame(x = 1:30, y = res_pearson_NB), aes(x = x, y =  y)) +
+            geom_point() +
+            ylim(c(-4,4)) +
+            geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+            geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+            labs(x = "Numéro d'observation", y = "Résidus Pearson") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Résidus Pearson")
+            
+             
+x
+
+x <- ggplot(data.frame(x = 1:30, y = res_deviance_NB), aes(x = x, y =  y)) +
+            geom_point()+
+            ylim(c(-4,4)) +
+            geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+            geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+            labs(x = "Numéro d'observation", y = "Résidus déviance") +
+            theme_bw() +
+            theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
+            ggtitle("Résidus déviance")
+            
+             
+x
+
+
+```
+
+Avec ce modèle, l'observation 30 a toujours un levier important et est déclarée influente selon les critères : distance de Cook, DFFITS, DFBETAS et le rapport de covariance.
+Les observations 1, 2, 3, 5, 11, 26, 27 et 29 ont été déclarées influentes selon le rapport de covariance mais pas selon les autres critères.
+
+```{r modèle avec la loi binomiale négative 3, include = FALSE}
+
+## Calcul des leviers et des residus 
+h_NB <- hatvalues(modele_NB)
+#sum(h)
+
+# Résidus de deviance standardisés est studentisés
+res_D_NB <- cbind("r'D"= rstandard(modele_NB), "r''D"= rstudent(modele_NB))
+
+## Detection des observations aberrantes
+(indices_resD_NB <- apply(abs(res_D_NB), 2, function(x){which(abs(x)>=3)}) )
+
+
+## Detection des observations influentes
+
+(indices_h_NB <- which(h>(3*(p+1)/n))) #observation 30
+
+d1_NB <- cooks.distance(modele_NB)
+#max(d1_NB) ## a comparer avec 1 et avec qf(0.5,p+1,n-(p+1))
+#qf(0.5,p+1,n-(p+1))
+(indice_cook_NB <- which(d1_NB>qf(0.5,p+1,n-(p+1)))) #observation 30
+
+d2_NB <- dffits(modele_NB) 
+#max(abs(d2_NB)) ## a comparer avec 3p/n
+#3*p/n
+(indices_dffits_NB <- which(as.vector(abs(d1_NB))>3*p/n)) #observation 30
+
+d3_NB <- dfbetas(modele_NB)
+#max(abs(d3_NB)) ## a comparer avec 3/racine.carre(n)
+#3/sqrt(n)
+d3.matrice_NB <- abs(d3_NB)>3/sqrt(n)
+(indices_dfbetas_NB <- which(as.vector(rowSums(d3.matrice_NB))>0)) #observation 30
+
+d4_NB <- covratio(modele_NB)
+#max(abs(1-d4_NB)) ## a comparer avec 3p/n
+#3*p/n
+(indices_covratio_NB <- which(as.vector(abs(1-d4_NB))>3*p/n))
+
+intersect(indices_dfbetas_NB,indices_covratio_NB)
+intersect(intersect(indices_dffits_NB,indices_dfbetas_NB),indices_covratio_NB) 
+
+```
+
+
+#### Conclusion :
+
+Le modèle ajusté avec la loi binomiale négative semble plus adéquat pour ces données à cause de la variabilité extra-poissonnière. Les graphiques des résidus de déviance et de Pearson sont satisfaisants (la majorité des résidus est entre -2 et 2 et les graphiques ne présentent aucune tendance particulière). La déviance résiduelle du modèle est de $29.409$.
+Avec ce modèle, le graphique des valeurs prédites de DS en fonction des valeurs réelles suggère encore un mauvais ajustement. À notre avis, ce faible ajustement est normal du fait de la petite taille de l'échantillon (30 observations). Cependant, le modèle permet de capturer la relation entre les variables *Age* et *Ds*. 
 
 ## Question 3
 ```{r , include=FALSE}
