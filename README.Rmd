@@ -1,5 +1,11 @@
-# STT-7125
-Devoir 1
+---
+title: "STT-7125"
+subtitle: "Devoir 1"
+author: "Caroline Schomaker (536 995 219) -
+         Samira Amani (111 248 078) -
+         Yasmine Yonli ( )"
+date: "2025-11-02"
+---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -88,6 +94,7 @@ ggplot(data = Salary) +
     axis.title = element_text(size = 14),
     axis.text = element_text(size = 12)
   )
+
 ```
 
 Le diagramme en boîte ci-dessus indique une augmentation du salaire avec un dernier diplôme obtenu de plus haut niveau. On observe le salaire avec comme dernier diplôme un baccalauréat, une maîtrise et un doctorat. Toutes les mesures de position montrées par le diagramme (quartiles, médiane, minimum, maximum et valeurs potentiellement aberrantes) montrent une augmentation en fonction du diplôme. 
@@ -303,23 +310,30 @@ Le jeu de données sur l'infection des oreilles comporte 287 observations et 4 v
 ```{r variables_plot, include=FALSE}
 
 #Stat simples
-g1 <- ggplot(earinf, aes(x = Swim, y = Infec)) +
-  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
-  labs(x = "Swim", y = "Proportion d'infection") +
-  theme_minimal(base_size = 13)
+g1 <- ggplot(earinf, aes(x = Swim)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Swim", x = "Fréquence de nage", y = "Effectif") +
+  theme_minimal(base_size = 12)
 
-g2 <- ggplot(earinf, aes(x = Loc, y = Infec)) +
-  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
-  labs(x = "Loc", y = "Proportion d'infection") +
-  theme_minimal(base_size = 13) 
-g3 <- ggplot(earinf, aes(x = Sex, y = Infec)) +
-  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
-  labs(x = "Sexe", y = "Proportion d'infection") +
-  theme_minimal(base_size = 13) 
-g4 <- ggplot(earinf, aes(x = Age, y = Infec)) +
-  stat_summary(fun = mean, geom = "bar", fill = "steelblue", width = 0.6) +
-  labs(x = "Age", y = "Proportion d'infection") +
-  theme_minimal(base_size = 13)
+g2 <- ggplot(earinf, aes(x = Loc)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Loc", x = "Lieu de nage", y = "Effectif") +
+  theme_minimal(base_size = 12) 
+
+g3 <- ggplot(earinf, aes(x = Sex)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Sex", x = "Sexe", y = "Effectif") +
+  theme_minimal(base_size = 12) 
+
+g4 <- ggplot(earinf, aes(x = Age)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Age", x = "Catégorie d'âge", y = "Effectif") +
+  theme_minimal(base_size = 12)
+
+g9 <- ggplot(earinf, aes(x = Infec)) +
+  geom_bar(fill = "steelblue", width = 0.7) +
+  labs(title = "Distribution de Infec", x = "Infection", y = "Effectif") +
+  theme_minimal(base_size = 12)
 
 #Stat bivariées
 g5 <-ggplot(earinf, aes(x = Swim, fill = factor(Infec))) + geom_bar(position = "fill") +
@@ -344,7 +358,7 @@ g8 <-ggplot(earinf, aes(x = Age, fill = factor(Infec))) +
 #Pour les variables numériques
 boxplot(Age ~ Infec, data = earinf, main="Âge selon infection", ylab="Âge")
 
-graph1<-(g1 + g2 + g3 +g4) +
+graph1<-(g1 + g2 + g3 +g4 + g9) +
   plot_annotation(
     title = "Proportion d'infection selon les variables explicatives - simple",
     theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
@@ -354,17 +368,46 @@ graph2<-(g5 + g6 + g7 + g8) +
     title = "Proportion d'infection selon les variables explicatives - bivariée",
     theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
   )
+vars <- c("Swim", "Loc", "Sex", "Age", "Infec")
+
+freq <- function(data, var_name) {
+  x <- data[[var_name]]
+  counts <- if (is.factor(x)) table(x, useNA = "no") else table(as.character(x))
+  props  <- prop.table(counts) * 100
+
+  data.frame(
+    Variable    = var_name,
+    Modalité    = names(counts),
+    Effectif    = as.integer(counts),
+    Pourcentage = round(as.numeric(props), 2),
+    stringsAsFactors = FALSE
+  )
+}
+
+frequence_df <- do.call(rbind, lapply(vars, function(v) freq(earinf, v)))
+
 ```
 
 En explorant les données, on remarque que toutes les variables explicatives à l'étude sont catégorielles.<br>
-Les graphiques de ces variables en fonction de la variable réponse Infec montre principalement:<br>
+Les graphiques de ces variables en fonction de la variable réponse Infec montre principalement que l'échantillon est globalement bien réparti entre les principales modalités des variables explicatives. Cependant On remarque des légers déséquilibres pour le sexe et l'âge.<br>
 
-Selon la variable Swim, il y a autant de nageurs ayant eu une infection de l'oreille que ceux n'ayant pas eu d'infection pour les nageurs ayant une fréquence occasionnelle. En revanche, chez ceux qui nagent de facon fréquente, il y a un peu moins de nageurs qui ont eu une infection.<br><br>
-Concernant la localisation (Loc), il y a un peu plus de nageurs qui n'ont pas eu d'infection en nageant ailleurs que dans la mer, tandis que ceux qui nagent dans la mer ont une proportion plus élevée de ne pas avoir d'infection par rapport à ceux ayant eu une infetion.<br><br>
-On remarque qu'il n'y a pas vraiment de différence entre le fait d'avoir ou non une infection selon le sexe, mais une légère distinction apparait pour les femmes pour lesquelles il y a un peu moins de risque d'avoir une infection.<br><br>
-Enfin, il y a également autant de nageurs dans les 3 catégories d'âge qui ont eu ou non une infection.
+Selon la variable Swim, les nageurs sont répartis de façon équilibrée entre les deux catégories Fréquents et Occasionnels. La proportion d'infection est légèrement plus élevée chez les nageurs à fréquence Occasionnelle (Occas) que chez les nageurs Fréquents.<br>
+
+Concernant la localisation (Loc), il y a un peu plus de personnes nageant à la place comparé à ailleurs. la proportion d'infection est visiblement plus faible lorsque la nage a lieu à la Mer (Beach) par rapport à la nage ailleurs qu'à la mer.<br>
+
+On observe que la proportion d'hommes (65.5%) est beaucoup plus élevé que celle des femmes (34.5%). La proportion d'infection est très similaire entre les sexes, avec une légère tendance à être plus faible chez les Femmes par rapport aux Hommes.<br>
+
+Il y a beaucoup plus de nageurs entre 15 et 19 ans (48.8%). Les jeunes de 25 à 29 ans sont les moins nombreux des 3 catégories avec seulement 68 nageurs de cette tranche d'âge. De plus, il n'y a pas de différence notable dans la proportion d'infection à travers les trois catégories d'âge, on peut se douter que l'âge pourrait ne pas être significatif.
+
+Enfin, 47.4% des nageurs ont une infection de l'oreille.
+
 ```{r stat1}
-summary(earinf)
+knitr::kable(
+  frequence_df,
+  caption   = "Fréquences et proportions par variable (n = 287)",
+  col.names = c("Variable", "Modalité", "Effectif (n)", "Pourcentage (%)"),
+  align     = "lrrr"
+)
 graph1 ; graph2
 ```
 
@@ -428,7 +471,7 @@ AIC(forward_1,backward_1,stepwise_1)
 
 L'âge initialement catégoriel, a été converti en une variable numérique en prenant l'âge moyen de chaque catégorie.<br>
 En incluant la variable d'âge continue, le modèle complet obtient un AIC plus faible (395.1) que celui ave l'âge catégoriel (396.2). Le BIC également confirme le fait que le modèle avec l'âge considéré comme étant continu est le plus adapté aux données.<br>
-Incluons des termes d'interaction, cubiques, quadratiques et voyons si ces ajouts améliorent le modèle. 
+Même si l'âge n'était pas significatif dans le modèle initial, incluons des termes d'interaction, cubiques, quadratiques et voyons si ces ajouts améliorent le modèle.  
 
 ```{r, include=FALSE}
 earinf$Age_continu <-ifelse(earinf$Age == "15-19", mean(c(15,19)),
@@ -524,12 +567,12 @@ Le fait de nager ailleurs qu'à la mer augmente le risque d'infection de 3.36% e
 
 Ensuite, les hommes ont une cote d'infection 0.6286 fois plus que celle des femmes.<br>
 
-Enfin, chez les hommes, le fait de nager ailleurs qu'à la mer a un risque $e^{1.05835+0.03307} = 2.9785$ fois plus élevé.
+Enfin, chez les hommes, le fait de nager ailleurs qu'à la mer a un risque $e^{1.05835+0.03307} = 2.9785$ fois plus élevé. L'interaction entre le lieu de la nage et le sexe masculin est significative sur le risque d'infection de l'oreille.
 
 
 ## Valeurs influentes, aberrantes et extravariabilité
 
-Aucune observation n'a été déclarée influente ou aberrante. Le facteur de dispersion $\hat{\phi} = \frac{\text{Déviance résiduelle}}{n - (p+1)} = 1.351358 <2 $ et prcohe de 1, alors on peut conclure qu'il n'y a pas d'extra variabilité.
+Aucune observation n'a été déclarée influente ou aberrante. Le facteur de dispersion $$\hat{\phi} = \frac{\text{Déviance résiduelle}}{n - (p+1)} = 1.351358 <2 $$ et prcohe de 1, alors on peut conclure qu'il n'y a pas d'extra variabilité.
 ```{r, include=FALSE}
 n <- dim(earinf)[1]
 p <- dim(earinf)[2]-3
@@ -575,6 +618,7 @@ print(rapport_phi)
 
 ```{r, include=FALSE}
 #Adéquation du modèle
+residus.deviance <- resid(modele.logit)
 pvalue.adequation <- 1-pchisq(deviance_residuelle, df=df)
 
 #Prédiction du modèle
@@ -603,12 +647,13 @@ validation_results <- data.frame(
     "0.633 (Mauvaise performance)"
   )
 )
-
+pvalue.adequation
+print(courbe.roc)
 ```
 
 ```{r}
-pvalue.adequation
-print(courbe.roc);plot(courbe.roc)
+plot(residus.deviance,type="p",xlab="Numero d’observation",ylab="Residus deviance")
+plot(courbe.roc)
 knitr::kable(validation_results,
              caption = "Résumé des critères de validation du modèle logistique final",
              col.names = c("Critère de validation", "Résultat numérique", "Conclusion"),
